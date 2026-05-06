@@ -1,12 +1,12 @@
-import { chatMIstralAI } from "@langchain/mistralai";
+import { chatMistralAI } from "@langchain/mistralai";
 import { config } from "../config/config.js";
 
-const model = new chatMIstralAI({
+const model = new chatMistralAI({
   model: "mistral-medium-latest",
-  apikey: config.MISTRAL_API_KEY,
+  apiKey: config.MISTRAL_API_KEY,
 });
 
-export async function generateResponse(messages) {
+export async function generateResponse(messages, onChunk) {
   try {
     const stream = await model.stream(messages); // streaming starts here
 
