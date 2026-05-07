@@ -1,20 +1,36 @@
-import { chatMistralAI } from "@langchain/mistralai";
-import { config } from "../config/config.js";
+import { ChatMistralAI } from "@langchain/mistralai";
+import { createAgent } from "langchain";
+import config from "../config/config.js";
 
-const model = new chatMistralAI({
+const model = new ChatMistralAI({
   model: "mistral-medium-latest",
   apiKey: config.MISTRAL_API_KEY,
 });
 
-export async function generateResponse(messages, onChunk) {
-  try {
-    const stream = await model.stream(messages); // streaming starts here
+const agent = createAgent({
+  model,
+  tools: [],
+});
 
-    for await (const chunk of stream) {
-      onChunk(chunk.content); // Log each chunk as it arrives
+// normal response
+export async function generateResponse(messages) {
+
+  const response = await model.invoke(messages);
+
+  return response.content;
+}
+
+// streaming response
+export async function getStream(messages) {
+
+  const stream = await agent.stream(
+    {
+      messages,
+    },
+    {
+      streamMode: "messages",
     }
-  } catch (error) {
-    console.error("Error generating response:", error);
-    throw error;
-  }
+  );
+
+  return stream;
 }
