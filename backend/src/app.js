@@ -1,25 +1,49 @@
 import express from "express";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
-import Routers from "./routes/index.js";
-
+import cors from "cors";
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import chatRouter from "./routes/chat.route.js";
+import authRouter from "./routes/auth.route.js";
 
 const app = express();
 
-// Middleware
-app.use(morgan("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.GOOGLE_REDIRECT_URI,
+    },
 
-// Routes
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        return done(null, profile);
+      } catch (error) {
+        return done(error, null);
+      }
+    },
+  ),
+);
+
+// MIDDLEWARE
+app.use(morgan("dev"));
+
+app.use(cors({  origin: process.env.CLIENT_URL, credentials: true}));
+
+app.use(express.json());
+app.use(express.urlencoded({extended: true})) ;
+app.use(cookieParser());
+app.use(passport.initialize());
+
+// ROUTES
 app.get("/", (req, res) => {
-    res.send("Welcome to MentoAI Backend!");
+  res.send("Welcome to MentoAI Backend!");
 });
 
-const messages = [];
+app.use("/api/chat/message", chatRouter);
 
-// Use chat routes
-app.use("/api/chat/message", Routers);
+app.use("/api/auth", authRouter);
 
 export default app;

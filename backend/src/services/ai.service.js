@@ -14,7 +14,6 @@ const agent = createAgent({
 
 // normal response
 export async function generateResponse(messages) {
-
   const response = await model.invoke(messages);
 
   return response.content;
@@ -22,15 +21,35 @@ export async function generateResponse(messages) {
 
 // streaming response
 export async function getStream(messages) {
-
   const stream = await agent.stream(
     {
       messages,
     },
     {
       streamMode: "messages",
-    }
+    },
   );
 
   return stream;
+}
+
+// GENERATE CHAT TITLE
+export async function generateTitle(message) {
+  const prompt = `
+Generate a very short chat title 
+for this message.
+
+Message:
+${message}
+
+Rules:
+- maximum 5 words
+- no quotes
+- no special characters
+- concise
+`;
+
+  const response = await model.invoke(prompt);
+
+  return response.content.trim();
 }

@@ -1,15 +1,30 @@
-import e, { Router } from "express";
-import { handleChat } from "../controllers/chat.controllers";
+import { Router } from "express";
+
+import {
+  createNewChat,
+  handleChat,
+  getAllChats,
+  getChatMessages,
+  deleteChat,
+} from "../controllers/chat.controllers.js";
+
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
+// CREATE CHAT
+router.post("/new", authMiddleware, createNewChat);
 
-/**
- * @route POST /chat
- * @desc Handle chat messages and stream AI responses
- * @access Public
- */
+// SEND MESSAGE
+router.post("/message/:chatId", authMiddleware, handleChat);
 
- router.post("/message", handleChat);
+// GET ALL CHATS
+router.get("/all", authMiddleware,getAllChats);
+
+// GET CHAT MESSAGES
+router.get("/:chatId/messages", authMiddleware,getChatMessages);
+
+// DELETE CHAT
+router.delete("/:chatId",  authMiddleware,deleteChat);
 
 export default router;
