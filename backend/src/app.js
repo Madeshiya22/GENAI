@@ -4,8 +4,8 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import chatRouter from "./routes/chat.route.js";
-import authRouter from "./routes/auth.route.js";
+import chatRouter from "./routes/chat.routes.js";
+import authRouter from "./routes/auth.routes.js";
 
 const app = express();
 
@@ -14,7 +14,9 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_REDIRECT_URI,
+      callbackURL:
+        process.env.GOOGLE_REDIRECT_URI ||
+        "http://localhost:3000/api/auth/google/callback",
     },
 
     async (accessToken, refreshToken, profile, done) => {
@@ -30,10 +32,10 @@ passport.use(
 // MIDDLEWARE
 app.use(morgan("dev"));
 
-app.use(cors({  origin: process.env.CLIENT_URL, credentials: true}));
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 
 app.use(express.json());
-app.use(express.urlencoded({extended: true})) ;
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 

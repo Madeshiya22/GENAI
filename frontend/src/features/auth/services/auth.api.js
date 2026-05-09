@@ -4,9 +4,19 @@ export async function getCurrentUser() {
       credentials: "include",
     });
 
+    if (!response.ok) {
+      return {
+        success: false,
+      };
+    }
+
     return await response.json();
   } catch (error) {
     console.log(error);
+
+    return {
+      success: false,
+    };
   }
 }
 

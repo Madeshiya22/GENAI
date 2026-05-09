@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useDispatch } from "react-redux";
 
@@ -8,8 +8,23 @@ import { getCurrentUser } from "../services/auth.api";
 
 export const useAuth = () => {
   const dispatch = useDispatch();
+  const hasCheckedRef = useRef(false);
 
   useEffect(() => {
+    if (hasCheckedRef.current) {
+      return;
+    }
+
+    hasCheckedRef.current = true;
+
+    const path = window.location.pathname;
+
+    // Avoid expected 401 noise on the public login route.
+    if (path === "/login") {
+      dispatch(clearUser());
+      return;
+    }
+
     checkAuth();
   }, []);
 

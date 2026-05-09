@@ -1,15 +1,45 @@
-export async function sendMessage(chatId, userInput, onChunk = () => {}) {
+export async function sendMessage(
+  chatId,
+  userInput,
+  onChunk = () => {},
+  options = {},
+) {
+  const { signal, onTitle } = options;
+
   try {
-    const response = await fetch(`/api/chat/message/message/${chatId}`, {
+    const response = await fetch(`/api/chat/message/${chatId}`, {
       method: "POST",
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
+      signal,
       body: JSON.stringify({
         message: userInput,
       }),
     });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to send message";
+
+      try {
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          errorMessage = data?.message || errorMessage;
+        } catch {
+          errorMessage = text || errorMessage;
+        }
+      } catch {
+        // ignore parse errors
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    if (!response.body) {
+      return;
+    }
 
     const decoder = new TextDecoder();
 
@@ -22,14 +52,26 @@ export async function sendMessage(chatId, userInput, onChunk = () => {}) {
         if (line.startsWith("data:")) {
           const jsonStr = line.replace("data:", "");
 
-          const data = JSON.parse(jsonStr);
+          try {
+            const data = JSON.parse(jsonStr);
 
-          onChunk(data.chunk);
+            if (data.type === "title" && onTitle) {
+              onTitle(data.title);
+            } else if (data.chunk !== undefined) {
+              onChunk(data.chunk);
+            }
+          } catch {
+            // skip malformed JSON
+          }
         }
       }
     }
   } catch (error) {
-    console.log(error);
+    if (error.name !== "AbortError") {
+      console.log(error);
+    }
+
+    throw error;
   }
 }
 
@@ -45,6 +87,7 @@ export async function createChat() {
     return await response.json();
   } catch (error) {
     console.log(error);
+    throw error;
   }
 }
 
@@ -58,6 +101,7 @@ export async function getChats() {
     return await response.json();
   } catch (error) {
     console.log(error);
+    throw error;
   }
 }
 
@@ -71,5 +115,21 @@ export async function getMessages(chatId) {
     return await response.json();
   } catch (error) {
     console.log(error);
+    throw error;
+  }
+}
+
+// DELETE CHAT
+export async function deleteChat(chatId) {
+  try {
+    const response = await fetch(`/api/chat/message/${chatId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.log(error);
+    throw error;
   }
 }

@@ -8,7 +8,7 @@ import {
   deleteChat,
 } from "../controllers/chat.controllers.js";
 
-import { authMiddleware } from "../middleware/authMiddleware.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -16,15 +16,15 @@ const router = Router();
 router.post("/new", authMiddleware, createNewChat);
 
 // SEND MESSAGE
-router.post("/message/:chatId", authMiddleware, handleChat);
+router.post("/:chatId", authMiddleware, handleChat);
 
 // GET ALL CHATS
-router.get("/all", authMiddleware,getAllChats);
+router.get("/all", authMiddleware, getAllChats);
 
 // GET CHAT MESSAGES
-router.get("/:chatId/messages", authMiddleware,getChatMessages);
+router.get("/:chatId/messages", authMiddleware, getChatMessages);
 
 // DELETE CHAT
-router.delete("/:chatId",  authMiddleware,deleteChat);
+router.delete("/:chatId", authMiddleware, deleteChat);
 
 export default router;

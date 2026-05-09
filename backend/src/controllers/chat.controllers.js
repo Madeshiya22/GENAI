@@ -1,9 +1,8 @@
+import mongoose from "mongoose";
+
 import { getStream, generateTitle } from "../services/ai.service.js";
 import chatModel from "../models/chat.model.js";
-
 import messageModel from "../models/message.model.js";
-
-import { getStream } from "../services/ai.service.js";
 
 // CREATE NEW CHAT
 export async function createNewChat(req, res) {
@@ -34,6 +33,22 @@ export async function handleChat(req, res) {
     const { message } = req.body;
 
     const { chatId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      return res.status(400).json({
+        success: false,
+
+        message: "Invalid chat ID",
+      });
+    }
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+
+        message: "Message cannot be empty",
+      });
+    }
 
     // FIND CHAT
     const chat = await chatModel.findById(chatId);
@@ -87,18 +102,43 @@ export async function handleChat(req, res) {
     res.setHeader("Connection", "keep-alive");
 
     let fullResponse = "";
+    let connectionClosed = false;
+
+    req.on("close", () => {
+      connectionClosed = true;
+    });
 
     // STREAM RESPONSE
     for await (const chunk of stream) {
-      const aiChunk = chunk.choices[0]?.delta?.content || "";
+      if (connectionClosed) {
+        break;
+      }
 
-      fullResponse += aiChunk;
+      // LangChain agent.stream with streamMode:"messages" returns [message, metadata] tuples
+      let aiChunk = "";
+      if (Array.isArray(chunk)) {
+        const [msg] = chunk;
+        aiChunk = msg?.content || "";
+      } else if (chunk?.choices) {
+        // Raw OpenAI/Mistral format
+        aiChunk = chunk.choices[0]?.delta?.content || "";
+      } else if (chunk?.content !== undefined) {
+        aiChunk = chunk.content || "";
+      }
 
-      res.write(
-        `data:${JSON.stringify({
-          chunk: aiChunk,
-        })}\n\n`,
-      );
+      if (aiChunk) {
+        fullResponse += aiChunk;
+
+        res.write(
+          `data:${JSON.stringify({
+            chunk: aiChunk,
+          })}\n\n`,
+        );
+      }
+    }
+
+    if (connectionClosed) {
+      return;
     }
 
     // SAVE AI RESPONSE
@@ -112,11 +152,23 @@ export async function handleChat(req, res) {
 
     // AUTO TITLE GENERATION
     if (chat.title === "New Chat") {
-      const generatedTitle = await generateTitle(message);
+      try {
+        const generatedTitle = await generateTitle(message);
+        chat.title = generatedTitle;
+        await chat.save();
 
-      chat.title = generatedTitle;
-
-      await chat.save();
+        // Send title update to frontend via SSE
+        if (!connectionClosed) {
+          res.write(
+            `data:${JSON.stringify({
+              type: "title",
+              title: generatedTitle,
+            })}\n\n`,
+          );
+        }
+      } catch (titleError) {
+        console.log("Title generation failed:", titleError.message);
+      }
     }
 
     res.end();
@@ -164,6 +216,14 @@ export async function getChatMessages(req, res) {
   try {
     const { chatId } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      return res.status(400).json({
+        success: false,
+
+        message: "Invalid chat ID",
+      });
+    }
+
     // FIND CHAT
     const chat = await chatModel.findById(chatId);
 
@@ -208,6 +268,14 @@ export async function deleteChat(req, res) {
   try {
     const { chatId } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      return res.status(400).json({
+        success: false,
+
+        message: "Invalid chat ID",
+      });
+    }
+
     // FIND CHAT
     const chat = await chatModel.findById(chatId);
 
@@ -228,10 +296,9 @@ export async function deleteChat(req, res) {
       });
     }
 
-    // SOFT DELETE
-    chat.isDeleted = true;
+    await messageModel.deleteMany({ chat: chatId });
 
-    await chat.save();
+    await chatModel.deleteOne({ _id: chatId });
 
     return res.status(200).json({
       success: true,

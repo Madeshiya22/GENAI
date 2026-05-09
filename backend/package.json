@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx nodemon server.js"
+    "start": "npx nodemon server.js",
+    "dev": "npx nodemon server.js"
   },
   "keywords": [],
   "author": "",
@@ -16,10 +17,14 @@
     "@langchain/google-genai": "^2.1.30",
     "@langchain/mistralai": "^1.0.8",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "langchain": "^1.4.0",
     "mongoose": "^9.6.1",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
   }
 }

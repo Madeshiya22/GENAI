@@ -1,36 +1,46 @@
 import jwt from "jsonwebtoken";
 import * as userDao from "../dao/user.dao.js";
-import * as utils from "../utils/util.js";
+import * as utils from "../utils/utils.js";
 import config from "../config/config.js";
-import * as userDao from "../dao/user.dao.js";
 
 export async function googleAuthCallback(req, res) {
-  const userData = req.user; // The authenticated user from Passport
+  try {
+    const userData = req.user;
+    const email = userData?.emails?.[0]?.value || userData?._json?.email;
 
-  let user = await userDao.findUserByEmail(userData.emails[0].value);
+    if (!email) {
+      return res.redirect(`${config.CLIENT_URL}/login?error=oauth_email_missing`);
+    }
 
-  if (!user) {
-    user = await userDao.createUser({
-      fullname: userData.displayName,
-      email: userData.emails[0].value,
+    let user = await userDao.findUserByEmail(email);
+
+    if (!user) {
+      user = await userDao.createUser({
+        fullname: userData?.displayName || "Google User",
+        email,
+        googleId: userData?.id,
+      });
+    }
+
+    const token = utils.generateJWT({
+      id: user._id,
+      fullname: user.fullname,
     });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.redirect(config.CLIENT_URL);
+  } catch (error) {
+    console.log("Google OAuth callback error:", error.message);
+    return res.redirect(`${config.CLIENT_URL}/login?error=oauth_callback_failed`);
   }
-
-  const token = utils.generateJWT({
-    id: user._id,
-    fullname: user.fullname,
-  });
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-
-    maxAge: 3 * 24 * 60 * 60 * 1000,
-  });
-
-  res.redirect(config.CLIENT_URL);
 }
 
 export async function getCurrentUser(req, res) {
