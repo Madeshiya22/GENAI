@@ -1,4 +1,5 @@
 import React from "react";
+import mentoLogo from "../../../assets/mentoai_logo.png";
 import "../../../styles/Login.scss";
 
 const Login = () => {
@@ -15,8 +16,7 @@ const Login = () => {
 
       <div className="login__card">
         <div className="login__logo">
-          <div className="login__logo-icon">✦</div>
-          <h1>Mento AI</h1>
+          <img src={mentoLogo} alt="Mento AI" className="login__logo-img" />
         </div>
 
         <p className="login__subtitle">

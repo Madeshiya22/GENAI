@@ -1,4 +1,4 @@
-import "./WebSearchIndicator.scss";
+import "../../../../styles/WebSearchIndicator.scss";
 
 const WebSearchIndicator = () => {
   return (

@@ -7,9 +7,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://127.0.0.1:3000',  // explicit IPv4 — avoids ::1 ECONNREFUSED on Node 18+
         changeOrigin: true,
       },
     },
   },
 })
+

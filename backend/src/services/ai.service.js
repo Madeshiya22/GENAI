@@ -63,6 +63,52 @@ Answer:
   }
 }
 
+// OPTIMIZE SEARCH QUERY
+export async function optimizeSearchQuery(message) {
+
+  try {
+
+    const prompt = `
+Convert the user's query into an optimized web search query.
+
+Rules:
+- Keep it short
+- Make it search-engine friendly
+- Focus on factual retrieval
+- Remove unnecessary words
+- Preserve dates and entities
+
+Examples:
+"who won the IPL match on 10 may 2026"
+-> IPL 2026 May 10 match winner
+
+"latest AI news today"
+-> latest AI news today
+
+"bitcoin price now"
+-> bitcoin live price
+
+User Query:
+"${message}"
+
+Optimized Search Query:
+`;
+
+    const response = await model.invoke(prompt);
+
+    return response.content.trim();
+
+  } catch (error) {
+
+    console.log(
+      "Query optimization error:",
+      error.message
+    );
+
+    return message;
+  }
+}
+
 // STREAMING RESPONSE
 export async function getStream(messages) {
 

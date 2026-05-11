@@ -40,6 +40,11 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 // ROUTES
+// Silence Chrome DevTools well-known probe (harmless browser request)
+app.get("/.well-known/appspecific/com.chrome.devtools.json", (_req, res) => {
+  res.status(204).end();
+});
+
 app.get("/", (req, res) => {
   res.send("Welcome to MentoAI Backend!");
 });

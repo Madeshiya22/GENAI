@@ -1,4 +1,4 @@
-import "./SourceCard.scss";
+import "../../../../styles/SourceCard.scss";
 
 const SourceCard = ({ source }) => {
 

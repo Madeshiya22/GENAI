@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import mentoLogo from "../../../assets/mentoai_logo.png";
 import { useDispatch, useSelector } from "react-redux";
 import {
   setChats,
@@ -160,8 +161,8 @@ const Sidebar = () => {
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
-        <div className="sidebar__brand-icon">✦</div>
-        <h2>Mento AI</h2>
+        <img src={mentoLogo} alt="Mento AI" className="sidebar__brand-logo" />
+        <span className="sidebar__brand-name">MENTO AI</span>
       </div>
 
       <button

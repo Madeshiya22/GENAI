@@ -1,6 +1,14 @@
 import mongoose from "mongoose";
-import { getStream, generateTitle, shouldSearchWeb } from "../services/ai.service.js";
+
+import {
+  getStream,
+  generateTitle,
+  shouldSearchWeb,
+  optimizeSearchQuery,
+} from "../services/ai.service.js";
+
 import { searchWeb } from "../services/tavily.service.js";
+
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
 
@@ -94,13 +102,15 @@ export async function handleChat(req, res) {
     const shouldSearch = await shouldSearchWeb(message);
 
     let webResults = [];
-   
+
     // SSE HEADERS
     res.setHeader("Content-Type", "text/event-stream");
 
     res.setHeader("Cache-Control", "no-cache");
 
     res.setHeader("Connection", "keep-alive");
+
+    // WEB SEARCH
     if (shouldSearch) {
 
       res.write(
@@ -109,8 +119,15 @@ export async function handleChat(req, res) {
         })}\n\n`
       );
 
-      webResults = await searchWeb(message);
+      // OPTIMIZE QUERY
+      const optimizedQuery =
+        await optimizeSearchQuery(message);
 
+      // SEARCH WEB
+      webResults =
+        await searchWeb(optimizedQuery);
+
+      // SEND SOURCES
       res.write(
         `data:${JSON.stringify({
           type: "sources",
@@ -118,32 +135,39 @@ export async function handleChat(req, res) {
         })}\n\n`
       );
     }
+
     // PREPARE FINAL AI MESSAGES
-let finalMessages = [...formattedMessages];
+    let finalMessages = [...formattedMessages];
 
-if (webResults.length > 0) {
+    if (webResults.length > 0) {
 
-  const formattedResults = webResults
-    .map(
-      (result, index) =>
-        `${index + 1}. ${result.title}\n${result.content}`
-    )
-    .join("\n\n");
+      const formattedResults = webResults
+        .map(
+          (result, index) =>
+            `${index + 1}. ${result.title}\n${result.content}`
+        )
+        .join("\n\n");
 
-  finalMessages.push({
-    role: "system",
-    content: `
+      finalMessages.push({
+        role: "system",
+        content: `
 You MUST use these realtime web search results while answering.
+
+Rules:
+- Prefer factual information from the sources
+- If multiple sources disagree, mention uncertainty
+- Keep the answer concise and accurate
+- Mention important dates or teams if available
 
 Web Results:
 
 ${formattedResults}
-    `,
-  });
-}
+        `,
+      });
+    }
 
-// GET AI STREAM
-const stream = await getStream(finalMessages);
+    // GET AI STREAM
+    const stream = await getStream(finalMessages);
 
     let fullResponse = "";
     let connectionClosed = false;
@@ -154,29 +178,38 @@ const stream = await getStream(finalMessages);
 
     // STREAM RESPONSE
     for await (const chunk of stream) {
+
       if (connectionClosed) {
         break;
       }
 
-      // LangChain agent.stream with streamMode:"messages" returns [message, metadata] tuples
+      // LangChain stream parsing
       let aiChunk = "";
+
       if (Array.isArray(chunk)) {
+
         const [msg] = chunk;
+
         aiChunk = msg?.content || "";
+
       } else if (chunk?.choices) {
-        // Raw OpenAI/Mistral format
-        aiChunk = chunk.choices[0]?.delta?.content || "";
+
+        aiChunk =
+          chunk.choices[0]?.delta?.content || "";
+
       } else if (chunk?.content !== undefined) {
+
         aiChunk = chunk.content || "";
       }
 
       if (aiChunk) {
+
         fullResponse += aiChunk;
 
         res.write(
           `data:${JSON.stringify({
             chunk: aiChunk,
-          })}\n\n`,
+          })}\n\n`
         );
       }
     }
@@ -196,27 +229,40 @@ const stream = await getStream(finalMessages);
 
     // AUTO TITLE GENERATION
     if (chat.title === "New Chat") {
+
       try {
-        const generatedTitle = await generateTitle(message);
+
+        const generatedTitle =
+          await generateTitle(message);
+
         chat.title = generatedTitle;
+
         await chat.save();
 
-        // Send title update to frontend via SSE
+        // SEND TITLE UPDATE
         if (!connectionClosed) {
+
           res.write(
             `data:${JSON.stringify({
               type: "title",
               title: generatedTitle,
-            })}\n\n`,
+            })}\n\n`
           );
         }
+
       } catch (titleError) {
-        console.log("Title generation failed:", titleError.message);
+
+        console.log(
+          "Title generation failed:",
+          titleError.message
+        );
       }
     }
 
     res.end();
+
   } catch (error) {
+
     console.log(error);
 
     return res.status(500).json({
@@ -230,13 +276,13 @@ const stream = await getStream(finalMessages);
 // GET ALL USER CHATS
 export async function getAllChats(req, res) {
   try {
+
     const chats = await chatModel
       .find({
         user: req.user.id,
 
         isDeleted: false,
       })
-
       .sort({
         updatedAt: -1,
       });
@@ -246,7 +292,9 @@ export async function getAllChats(req, res) {
 
       chats,
     });
+
   } catch (error) {
+
     return res.status(500).json({
       success: false,
 
@@ -258,9 +306,11 @@ export async function getAllChats(req, res) {
 // GET SINGLE CHAT MESSAGES
 export async function getChatMessages(req, res) {
   try {
+
     const { chatId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
+
       return res.status(400).json({
         success: false,
 
@@ -272,6 +322,7 @@ export async function getChatMessages(req, res) {
     const chat = await chatModel.findById(chatId);
 
     if (!chat) {
+
       return res.status(404).json({
         success: false,
 
@@ -281,6 +332,7 @@ export async function getChatMessages(req, res) {
 
     // SECURITY CHECK
     if (chat.user.toString() !== req.user.id) {
+
       return res.status(403).json({
         success: false,
 
@@ -298,7 +350,9 @@ export async function getChatMessages(req, res) {
 
       messages,
     });
+
   } catch (error) {
+
     return res.status(500).json({
       success: false,
 
@@ -310,9 +364,11 @@ export async function getChatMessages(req, res) {
 // DELETE CHAT
 export async function deleteChat(req, res) {
   try {
+
     const { chatId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
+
       return res.status(400).json({
         success: false,
 
@@ -324,6 +380,7 @@ export async function deleteChat(req, res) {
     const chat = await chatModel.findById(chatId);
 
     if (!chat) {
+
       return res.status(404).json({
         success: false,
 
@@ -333,6 +390,7 @@ export async function deleteChat(req, res) {
 
     // SECURITY CHECK
     if (chat.user.toString() !== req.user.id) {
+
       return res.status(403).json({
         success: false,
 
@@ -340,16 +398,22 @@ export async function deleteChat(req, res) {
       });
     }
 
-    await messageModel.deleteMany({ chat: chatId });
+    await messageModel.deleteMany({
+      chat: chatId,
+    });
 
-    await chatModel.deleteOne({ _id: chatId });
+    await chatModel.deleteOne({
+      _id: chatId,
+    });
 
     return res.status(200).json({
       success: true,
 
       message: "Chat deleted successfully",
     });
+
   } catch (error) {
+
     return res.status(500).json({
       success: false,
 

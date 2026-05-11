@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import mentoLogo from "../../../assets/mentoai_logo.png";
 import WebSearchIndicator from "../components/WebSearchIndicator/WebSearchIndicator";
 import SearchSources from "../components/SearchSources/SearchSources";
 import { useSelector } from "react-redux";
@@ -86,7 +87,9 @@ const Chat = () => {
         <div className="chat__messages">
           {showEmptyState ? (
             <div className="chat__empty">
-              <div className="chat__empty-icon">✦</div>
+              <div className="chat__empty-icon">
+                <img src={mentoLogo} alt="Mento AI" className="chat__empty-logo" />
+              </div>
               <h2>How can I help you today?</h2>
               <p>I'm Mento AI, your intelligent mentor. Ask me anything about coding, concepts, or problem-solving.</p>
 
@@ -113,7 +116,9 @@ const Chat = () => {
                     </div>
                   ) : (
                     <div className="message__bubble">
-                      <div className="message__avatar">✦</div>
+                      <div className="message__avatar">
+                        <img src={mentoLogo} alt="AI" className="message__avatar-img" />
+                      </div>
                       <div className="message__content">
                         <MarkdownRenderer content={msg.content} />
                       </div>
@@ -123,16 +128,48 @@ const Chat = () => {
               ))}
             </>
           )}
-          
+
+          {/* Web search indicator — aligned as an AI message */}
           {isSearchingWeb && (
-            <WebSearchIndicator />
+            <div className="message assistant">
+              <div className="message__bubble">
+                <div className="message__avatar">
+                  <img src={mentoLogo} alt="AI" className="message__avatar-img" />
+                </div>
+                <div className="message__content">
+                  <WebSearchIndicator />
+                </div>
+              </div>
+            </div>
           )}
 
+          {/* Sources — aligned as an AI message */}
           {sources.length > 0 && (
-            <SearchSources sources={sources} />
+            <div className="message assistant">
+              <div className="message__bubble">
+                <div className="message__avatar">
+                  <img src={mentoLogo} alt="AI" className="message__avatar-img" />
+                </div>
+                <div className="message__content">
+                  <SearchSources sources={sources} />
+                </div>
+              </div>
+            </div>
           )}
 
-          {streaming && <TypingIndicator />}
+          {/* Typing indicator — aligned as an AI message */}
+          {streaming && (
+            <div className="message assistant">
+              <div className="message__bubble">
+                <div className="message__avatar">
+                  <img src={mentoLogo} alt="AI" className="message__avatar-img" />
+                </div>
+                <div className="message__content">
+                  <TypingIndicator />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div ref={messagesEndRef} />
         </div>

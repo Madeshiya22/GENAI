@@ -1,6 +1,5 @@
 import SourceCard from "../SourceCard/SourceCard";
-
-import "./SearchSources.scss";
+import "../../../../styles/SearchSources.scss";
 
 const SearchSources = ({ sources = [] }) => {
 
