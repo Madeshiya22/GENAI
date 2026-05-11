@@ -12,20 +12,21 @@
 
   &__brand {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 6px;
-    padding: 10px 10px 16px;
+    gap: 10px;
+    padding: 10px;
 
     &-logo {
-      width: 56px;
-      height: 56px;
+      width: 45px;
+      height: 45px;
+      border-radius: 12px;
       object-fit: contain;
       display: block;
     }
 
     &-name {
-      font-size: 11px;
+      font-size: 20px;
       font-weight: 700;
       letter-spacing: 0.18em;
       background: linear-gradient(135deg, var(--text-heading) 0%, var(--accent-hover) 100%);
