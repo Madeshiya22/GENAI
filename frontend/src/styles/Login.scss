@@ -8,123 +8,249 @@
   position: relative;
   overflow: hidden;
 
-  // Animated background orbs
-  &::before,
-  &::after {
-    content: '';
+  // ─── Animated orbs ─────────────────────
+  &__orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.4;
-    animation: float 8s ease-in-out infinite;
+    filter: blur(100px);
+    opacity: 0.35;
+    pointer-events: none;
+
+    &--1 {
+      width: 500px;
+      height: 500px;
+      background: var(--accent);
+      top: -150px;
+      right: -100px;
+      animation: orbFloat1 10s ease-in-out infinite;
+    }
+
+    &--2 {
+      width: 350px;
+      height: 350px;
+      background: #6246ea;
+      bottom: -100px;
+      left: -80px;
+      animation: orbFloat2 12s ease-in-out infinite;
+    }
+
+    &--3 {
+      width: 250px;
+      height: 250px;
+      background: #4f46e5;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.15;
+      animation: orbFloat3 8s ease-in-out infinite;
+    }
   }
 
-  &::before {
-    width: 400px;
-    height: 400px;
-    background: var(--accent);
-    top: -100px;
-    right: -100px;
-    animation-delay: 0s;
-  }
-
-  &::after {
-    width: 300px;
-    height: 300px;
-    background: #6246ea;
-    bottom: -80px;
-    left: -80px;
-    animation-delay: 4s;
-  }
-
+  // ─── Card ──────────────────────────────
   &__card {
     position: relative;
     z-index: 1;
-    background: var(--bg-secondary);
+    background: rgba(18, 18, 26, 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--border-strong);
-    padding: 48px 40px;
+    padding: 48px 44px;
     border-radius: var(--radius-xl);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 32px;
-    min-width: 360px;
-    box-shadow: var(--shadow-lg), var(--shadow-glow);
-    backdrop-filter: blur(20px);
+    gap: 20px;
+    min-width: 380px;
+    max-width: 420px;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      var(--shadow-lg),
+      0 0 80px rgba(124, 92, 252, 0.08);
+    animation: cardAppear 0.5s ease;
+  }
 
-    .login__logo {
+  // ─── Logo ──────────────────────────────
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    &-icon {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--accent) 0%, #6246ea 100%);
+      border-radius: 14px;
       display: flex;
       align-items: center;
-      gap: 12px;
-
-      &-icon {
-        width: 48px;
-        height: 48px;
-        background: var(--user-msg-bg);
-        border-radius: var(--radius-md);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        box-shadow: 0 4px 20px var(--accent-glow);
-      }
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 8px 32px var(--accent-glow);
+      animation: iconPulse 3s ease-in-out infinite;
     }
 
     h1 {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: 700;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.04em;
       background: linear-gradient(135deg, var(--text-heading) 0%, var(--accent-hover) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+  }
 
-    p {
-      color: var(--text-secondary);
-      font-size: 14px;
-      text-align: center;
-      max-width: 280px;
-      line-height: 1.6;
+  &__subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.7;
+  }
+
+  // ─── Divider ───────────────────────────
+  &__divider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 4px 0;
+
+    &::before,
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
     }
 
-    button {
-      width: 100%;
-      padding: 14px 24px;
-      border: 1px solid var(--border-strong);
-      cursor: pointer;
-      border-radius: var(--radius-md);
-      background: var(--bg-surface);
-      color: var(--text-primary);
-      font-size: 15px;
+    span {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
       font-weight: 500;
-      font-family: var(--font);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+  }
 
-      &:hover {
-        background: var(--bg-surface-hover);
-        border-color: var(--accent);
-        box-shadow: 0 0 20px var(--accent-glow);
-        transform: translateY(-1px);
-      }
+  // ─── Google button ─────────────────────
+  &__google-btn {
+    width: 100%;
+    padding: 14px 24px;
+    border: 1px solid var(--border-strong);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
 
-      &:active {
-        transform: translateY(0);
-      }
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent-subtle) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
 
-      svg {
-        width: 20px;
-        height: 20px;
+    &:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 24px var(--accent-glow);
+      transform: translateY(-2px);
+
+      &::before {
+        opacity: 1;
       }
     }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &__google-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  // ─── Terms ─────────────────────────────
+  &__terms {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 260px;
+    line-height: 1.6;
+    opacity: 0.6;
+  }
+
+  // ─── Footer ────────────────────────────
+  &__footer {
+    position: absolute;
+    bottom: 24px;
+    z-index: 1;
+    font-size: 12px;
+    color: var(--text-muted);
+    opacity: 0.4;
+    letter-spacing: 0.02em;
   }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-30px) scale(1.05); }
+// ─── Animations ──────────────────────────
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-30px, 20px) scale(1.05); }
+  66% { transform: translate(20px, -15px) scale(0.95); }
+}
+
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -25px) scale(1.08); }
+}
+
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.15; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.25; }
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 8px 32px var(--accent-glow); }
+  50% { box-shadow: 0 8px 48px rgba(124, 92, 252, 0.35); }
+}
+
+// ─── Responsive ──────────────────────────
+@media (max-width: 480px) {
+  .login {
+    &__card {
+      min-width: unset;
+      margin: 0 16px;
+      padding: 36px 28px;
+    }
+
+    &__logo h1 {
+      font-size: 26px;
+    }
+  }
 }

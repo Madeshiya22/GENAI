@@ -1,0 +1,292 @@
+// ═══════════════════════════════════════════
+//  Markdown Renderer Styles — Mento AI
+// ═══════════════════════════════════════════
+
+.md {
+  word-break: break-word;
+  overflow-wrap: break-word;
+
+  // ─── Paragraphs ──────────────────────────
+  .md-paragraph {
+    margin: 6px 0;
+    line-height: 1.75;
+    color: var(--text-primary);
+  }
+
+  // ─── Headings ────────────────────────────
+  .md-heading {
+    color: var(--text-heading);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 20px 0 8px;
+    line-height: 1.3;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  .md-h1 { font-size: 22px; }
+  .md-h2 { font-size: 19px; }
+  .md-h3 { font-size: 17px; }
+  .md-h4 { font-size: 15px; }
+
+  // ─── Strong / Em ─────────────────────────
+  .md-strong {
+    color: var(--text-heading);
+    font-weight: 600;
+  }
+
+  .md-em {
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  // ─── Links ───────────────────────────────
+  .md-link {
+    color: var(--accent-hover);
+    text-decoration: underline;
+    text-decoration-color: rgba(145, 119, 255, 0.3);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.15s ease;
+
+    &:hover {
+      text-decoration-color: var(--accent-hover);
+    }
+  }
+
+  // ─── Inline code ─────────────────────────
+  .md-inline-code {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+    background: rgba(124, 92, 252, 0.08);
+    border: 1px solid rgba(124, 92, 252, 0.12);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.88em;
+    color: var(--accent-hover);
+    white-space: nowrap;
+  }
+
+  // ─── Code blocks ─────────────────────────
+  .md-code {
+    margin: 14px 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: #1a1b26;
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid var(--border);
+    }
+
+    &__lang {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-family: var(--font);
+    }
+
+    &__copy {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: var(--font);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-primary);
+      }
+    }
+
+    &__plain {
+      margin: 0;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #abb2bf;
+      background: #1a1b26;
+
+      code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: inherit;
+        font-size: inherit;
+      }
+    }
+
+    // Override syntax highlighter defaults
+    > div {
+      border-radius: 0 0 10px 10px !important;
+    }
+  }
+
+  // ─── Tables ──────────────────────────────
+  .md-table-wrap {
+    overflow-x: auto;
+    margin: 14px 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    -webkit-overflow-scrolling: touch;
+
+    // Custom scrollbar for table
+    &::-webkit-scrollbar {
+      height: 5px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 3px;
+    }
+  }
+
+  .md-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    white-space: nowrap;
+
+    &__head {
+      background: var(--bg-surface);
+    }
+
+    &__th {
+      padding: 10px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-heading);
+      border-bottom: 1px solid var(--border-strong);
+      white-space: nowrap;
+    }
+
+    &__td {
+      padding: 10px 16px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    &__row {
+      transition: background 0.1s ease;
+
+      &:hover .md-table__td {
+        background: rgba(124, 92, 252, 0.04);
+      }
+
+      &:last-child .md-table__td {
+        border-bottom: none;
+      }
+    }
+  }
+
+  // ─── Lists ───────────────────────────────
+  .md-list {
+    margin: 8px 0;
+    padding-left: 22px;
+
+    &--ul {
+      list-style-type: disc;
+
+      .md-list--ul {
+        list-style-type: circle;
+
+        .md-list--ul {
+          list-style-type: square;
+        }
+      }
+    }
+
+    &--ol {
+      list-style-type: decimal;
+    }
+  }
+
+  .md-list__item {
+    margin: 4px 0;
+    line-height: 1.7;
+    color: var(--text-primary);
+
+    &::marker {
+      color: var(--accent);
+    }
+
+    // Nested lists
+    .md-list {
+      margin: 2px 0;
+    }
+
+    // Checkbox (task list via GFM)
+    input[type="checkbox"] {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border-strong);
+      border-radius: 4px;
+      margin-right: 8px;
+      vertical-align: middle;
+      position: relative;
+      cursor: default;
+
+      &:checked {
+        background: var(--accent);
+        border-color: var(--accent);
+
+        &::after {
+          content: "✓";
+          position: absolute;
+          top: -1px;
+          left: 2px;
+          font-size: 11px;
+          color: white;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+
+  // ─── Blockquotes ─────────────────────────
+  .md-blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 10px 18px;
+    margin: 14px 0;
+    background: rgba(124, 92, 252, 0.05);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: var(--text-secondary);
+
+    .md-paragraph {
+      margin: 4px 0;
+      color: var(--text-secondary);
+    }
+
+    .md-blockquote {
+      margin: 8px 0;
+      border-left-color: rgba(124, 92, 252, 0.4);
+    }
+  }
+
+  // ─── Horizontal rule ─────────────────────
+  .md-hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+}
