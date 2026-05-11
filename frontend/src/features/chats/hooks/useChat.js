@@ -9,6 +9,12 @@ import {
   updateChatTitle,
 } from "../state/chat.slice";
 
+import {
+  setSearchingWeb,
+  setSources,
+  clearSources,
+} from "../state/webSearch.slice";
+
 import { sendMessage, createChat } from "../services/chat.api";
 
 let activeStreamAbortController = null;
@@ -57,6 +63,9 @@ export const useChat = () => {
 
     activeStreamAbortController = new AbortController();
 
+    // CLEAR OLD WEB SEARCH STATE
+    dispatch(clearSources());
+
     // USER MESSAGE
     dispatch(
       addMessage({
@@ -88,10 +97,24 @@ export const useChat = () => {
         },
         {
           signal: activeStreamAbortController.signal,
+
           onTitle: (title) => {
-            dispatch(updateChatTitle({ chatId: actualChatId, title }));
+            dispatch(
+              updateChatTitle({
+                chatId: actualChatId,
+                title,
+              })
+            );
           },
-        },
+
+          onSearching: (value) => {
+            dispatch(setSearchingWeb(value));
+          },
+
+          onSources: (sources) => {
+            dispatch(setSources(sources));
+          },
+        }
       );
 
       return true;

@@ -12,15 +12,60 @@ const agent = createAgent({
   tools: [],
 });
 
-// normal response
-export async function generateResponse(messages) {
-  const response = await model.invoke(messages);
+// AI-BASED WEB SEARCH DETECTION
+export async function shouldSearchWeb(message) {
 
-  return response.content;
+  try {
+
+    const prompt = `
+Determine whether this user query requires realtime web search.
+
+User Query:
+"${message}"
+
+Rules:
+- Answer ONLY with YES or NO
+- Use YES for:
+  - latest news
+  - current events
+  - live scores
+  - weather
+  - stock prices
+  - realtime updates
+  - recent information
+  - trending topics
+
+Examples:
+"latest AI news" -> YES
+"weather today" -> YES
+"Who won yesterday IPL match?" -> YES
+"What is React?" -> NO
+"Explain recursion" -> NO
+
+Answer:
+`;
+
+    const response = await model.invoke(prompt);
+
+    return response.content
+      .trim()
+      .toUpperCase()
+      .includes("YES");
+
+  } catch (error) {
+
+    console.log(
+      "Web detection error:",
+      error.message
+    );
+
+    return false;
+  }
 }
 
-// streaming response
+// STREAMING RESPONSE
 export async function getStream(messages) {
+
   const stream = await agent.stream(
     {
       messages,
@@ -35,6 +80,7 @@ export async function getStream(messages) {
 
 // GENERATE CHAT TITLE
 export async function generateTitle(message) {
+
   const prompt = `
 Generate a very short chat title 
 for this message.

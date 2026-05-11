@@ -1,11 +1,15 @@
 export async function sendMessage(
   chatId,
   userInput,
-  onChunk = () => {},
+  onChunk = () => { },
   options = {},
 ) {
-  const { signal, onTitle } = options;
-
+  const {
+    signal,
+    onTitle,
+    onSearching,
+    onSources,
+  } = options;
   try {
     const response = await fetch(`/api/chat/message/${chatId}`, {
       method: "POST",
@@ -54,10 +58,30 @@ export async function sendMessage(
 
           try {
             const data = JSON.parse(jsonStr);
-
             if (data.type === "title" && onTitle) {
+
               onTitle(data.title);
+
+            } else if (
+              data.type === "searching" &&
+              onSearching
+            ) {
+
+              onSearching(true);
+
+            } else if (
+              data.type === "sources" &&
+              onSources
+            ) {
+
+              onSources(data.sources);
+
+              if (onSearching) {
+                onSearching(false);
+              }
+
             } else if (data.chunk !== undefined) {
+
               onChunk(data.chunk);
             }
           } catch {

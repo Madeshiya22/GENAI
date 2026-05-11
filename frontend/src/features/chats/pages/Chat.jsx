@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import WebSearchIndicator from "../components/WebSearchIndicator/WebSearchIndicator";
+import SearchSources from "../components/SearchSources/SearchSources";
 import { useSelector } from "react-redux";
 import { useChat } from "../hooks/useChat";
 import Sidebar from "../components/Sidebar";
@@ -21,9 +23,8 @@ const Chat = () => {
 
   const { handleSendMessage } = useChat();
 
-  const { messages, activeChatId, streaming, tempChatActive } = useSelector(
-    (state) => state.chat,
-  );
+  const { messages, activeChatId, streaming, tempChatActive } = useSelector((state) => state.chat);
+  const { isSearchingWeb, sources } = useSelector((state) => state.webSearch);
 
   const messagesEndRef = useAutoScroll(messages);
 
@@ -121,6 +122,14 @@ const Chat = () => {
                 </div>
               ))}
             </>
+          )}
+          
+          {isSearchingWeb && (
+            <WebSearchIndicator />
+          )}
+
+          {sources.length > 0 && (
+            <SearchSources sources={sources} />
           )}
 
           {streaming && <TypingIndicator />}

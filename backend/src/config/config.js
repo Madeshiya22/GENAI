@@ -46,9 +46,16 @@ if (!process.env.PORT) {
   );
 }
 
+if (!process.env.TAVILY_API_KEY) {
+  throw new Error(
+    "Error: TAVILY_API_KEY is not set in the environment variables.",
+  );
+}
+
 export default {
   PORT: process.env.PORT || 3000,
   MISTRAL_API_KEY: process.env.MISTRAL_API_KEY,
+  TAVILY_API_KEY: process.env.TAVILY_API_KEY,
   JWT_SECRET: process.env.JWT_SECRET,
   MONGODB_URI: process.env.MONGODB_URI,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,

@@ -13,9 +13,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@langchain/community": "^1.1.28",
     "@langchain/core": "^1.1.44",
     "@langchain/google-genai": "^2.1.30",
     "@langchain/mistralai": "^1.0.8",
+    "@tavily/core": "^0.7.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",

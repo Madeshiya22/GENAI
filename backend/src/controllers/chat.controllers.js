@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-
-import { getStream, generateTitle } from "../services/ai.service.js";
+import { getStream, generateTitle, shouldSearchWeb } from "../services/ai.service.js";
+import { searchWeb } from "../services/tavily.service.js";
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
 
@@ -91,15 +91,59 @@ export async function handleChat(req, res) {
       content: msg.content,
     }));
 
-    // GET AI STREAM
-    const stream = await getStream(formattedMessages);
+    const shouldSearch = await shouldSearchWeb(message);
 
+    let webResults = [];
+   
     // SSE HEADERS
     res.setHeader("Content-Type", "text/event-stream");
 
     res.setHeader("Cache-Control", "no-cache");
 
     res.setHeader("Connection", "keep-alive");
+    if (shouldSearch) {
+
+      res.write(
+        `data:${JSON.stringify({
+          type: "searching",
+        })}\n\n`
+      );
+
+      webResults = await searchWeb(message);
+
+      res.write(
+        `data:${JSON.stringify({
+          type: "sources",
+          sources: webResults,
+        })}\n\n`
+      );
+    }
+    // PREPARE FINAL AI MESSAGES
+let finalMessages = [...formattedMessages];
+
+if (webResults.length > 0) {
+
+  const formattedResults = webResults
+    .map(
+      (result, index) =>
+        `${index + 1}. ${result.title}\n${result.content}`
+    )
+    .join("\n\n");
+
+  finalMessages.push({
+    role: "system",
+    content: `
+You MUST use these realtime web search results while answering.
+
+Web Results:
+
+${formattedResults}
+    `,
+  });
+}
+
+// GET AI STREAM
+const stream = await getStream(finalMessages);
 
     let fullResponse = "";
     let connectionClosed = false;
