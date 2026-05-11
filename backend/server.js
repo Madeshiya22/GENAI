@@ -1,14 +1,14 @@
-import {config} from "dotenv";
+    import {config} from "dotenv";
 
-config();
+    config();
 
-const { default: connectDB } = await import("./src/config/db.js");
-const { default: app } = await import("./src/app.js");
+    const { default: connectDB } = await import("./src/config/db.js");
+    const { default: app } = await import("./src/app.js");
 
-const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 3000;
 
-await connectDB();
+    await connectDB();
 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+    app.listen(PORT , () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
