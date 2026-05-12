@@ -7,7 +7,7 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   flex-shrink: 0;
   position: relative;
 
@@ -16,7 +16,7 @@
     flex-direction: row;
     align-items: center;
     gap: 10px;
-    padding: 10px;
+    padding:15px 0px;
 
     &-logo {
       width: 45px;
@@ -41,8 +41,8 @@
   &__close-btn {
     display: none;
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 1px;
+    right: 1px;
     background: transparent;
     border: none;
     color: var(--text-secondary);
