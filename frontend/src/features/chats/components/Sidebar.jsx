@@ -21,7 +21,7 @@ import { useChat } from "../hooks/useChat";
 import DeleteChatDialog from "../components/DeleteChatDialog";
 import "../../../styles/sidebar.scss";
 
-const Sidebar = () => {
+const Sidebar = ({ onChatSelect }) => {
   const dispatch = useDispatch();
   const { chats, activeChatId, streaming, messages, tempChatActive } =
     useSelector((state) => state.chat);
@@ -71,6 +71,7 @@ const Sidebar = () => {
     if (streaming) return; // Don't interrupt streaming
 
     dispatch(startTempChat());
+    if (onChatSelect) onChatSelect();
   }
 
   // OPEN EXISTING CHAT
@@ -83,6 +84,7 @@ const Sidebar = () => {
 
     const data = await getMessages(chatId);
     dispatch(setMessages(data?.messages || []));
+    if (onChatSelect) onChatSelect();
   }
 
   function handleAskDelete(chat, event) {

@@ -20,6 +20,7 @@ const SUGGESTION_CHIPS = [
 const Chat = () => {
   const [message, setMessage] = useState("");
   const [sendError, setSendError] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const textareaRef = useRef(null);
 
   const { handleSendMessage } = useChat();
@@ -81,9 +82,24 @@ const Chat = () => {
 
   return (
     <div className="chat-layout">
-      <Sidebar />
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
+      )}
+      <div className={`sidebar-container ${isSidebarOpen ? "open" : ""}`}>
+        <Sidebar onChatSelect={() => setIsSidebarOpen(false)} />
+      </div>
 
       <section className="chat">
+        <header className="chat__header-mobile">
+          <button className="chat__menu-btn" onClick={() => setIsSidebarOpen(true)}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          <span className="chat__header-title">Mento AI</span>
+        </header>
         <div className="chat__messages">
           {showEmptyState ? (
             <div className="chat__empty">
