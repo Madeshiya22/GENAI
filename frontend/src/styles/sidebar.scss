@@ -41,15 +41,15 @@
   &__close-btn {
     display: none;
     position: absolute;
-    top: 1px;
-    right: 1px;
+    top: 2px;
+    right: 2px;
     background: transparent;
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
     align-items: center;
     justify-content: center;
-    padding: 6px;
+    padding: 2px;
     border-radius: var(--radius-sm);
     transition: all 0.2s ease;
     z-index: 2;
