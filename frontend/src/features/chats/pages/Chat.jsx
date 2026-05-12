@@ -86,7 +86,10 @@ const Chat = () => {
         <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
       )}
       <div className={`sidebar-container ${isSidebarOpen ? "open" : ""}`}>
-        <Sidebar onChatSelect={() => setIsSidebarOpen(false)} />
+        <Sidebar 
+          onChatSelect={() => setIsSidebarOpen(false)} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
       </div>
 
       <section className="chat">
