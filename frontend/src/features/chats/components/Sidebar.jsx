@@ -162,17 +162,16 @@ const Sidebar = ({ onChatSelect, onClose }) => {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar__brand" style={{ justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src={mentoLogo} alt="Mento AI" className="sidebar__brand-logo" />
-          <span className="sidebar__brand-name">MENTO AI</span>
-        </div>
-        <button className="sidebar__close-btn" onClick={onClose} aria-label="Close sidebar">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+      <button className="sidebar__close-btn" onClick={onClose} aria-label="Close sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+
+      <div className="sidebar__brand">
+        <img src={mentoLogo} alt="Mento AI" className="sidebar__brand-logo" />
+        <span className="sidebar__brand-name">MENTO AI</span>
       </div>
 
       <button
