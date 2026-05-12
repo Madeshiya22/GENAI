@@ -1,6 +1,8 @@
+import { API_BASE_URL } from "../../../config/config";
+
 export async function getCurrentUser() {
   try {
-    const response = await fetch("/api/auth/me", {
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
       credentials: "include",
     });
 
@@ -22,7 +24,7 @@ export async function getCurrentUser() {
 
 export async function logoutUser() {
   try {
-    const response = await fetch("/api/auth/logout", {
+    const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
       method: "POST",
       credentials: "include",
     });

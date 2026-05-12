@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../../config/config";  
 export async function sendMessage(
   chatId,
   userInput,
@@ -11,7 +12,7 @@ export async function sendMessage(
     onSources,
   } = options;
   try {
-    const response = await fetch(`/api/chat/message/${chatId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/chat/message/${chatId}`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -102,7 +103,7 @@ export async function sendMessage(
 // CREATE NEW CHAT
 export async function createChat() {
   try {
-    const response = await fetch("/api/chat/message/new", {
+    const response = await fetch(`${API_BASE_URL}/api/chat/message/new`, {
       method: "POST",
 
       credentials: "include",
@@ -118,7 +119,7 @@ export async function createChat() {
 // GET ALL CHATS
 export async function getChats() {
   try {
-    const response = await fetch("/api/chat/message/all", {
+    const response = await fetch(`${API_BASE_URL}/api/chat/message/all`, {
       credentials: "include",
     });
 
@@ -132,7 +133,7 @@ export async function getChats() {
 // GET CHAT MESSAGES
 export async function getMessages(chatId) {
   try {
-    const response = await fetch(`/api/chat/message/${chatId}/messages`, {
+    const response = await fetch(`${API_BASE_URL}/api/chat/message/${chatId}/messages`, {
       credentials: "include",
     });
 
@@ -146,7 +147,7 @@ export async function getMessages(chatId) {
 // DELETE CHAT
 export async function deleteChat(chatId) {
   try {
-    const response = await fetch(`/api/chat/message/${chatId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/chat/message/${chatId}`, {
       method: "DELETE",
       credentials: "include",
     });
