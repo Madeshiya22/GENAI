@@ -1,4 +1,4 @@
-import config from "./config/config.js";
+import "./config/config.js";
 
 const { default: connectDB } = await import("./src/config/db.js");
 const { default: app } = await import("./src/app.js");
