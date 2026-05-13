@@ -1,4 +1,12 @@
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const standardFontDataUrl = `${path
+  .join(__dirname, "../../../../node_modules/pdfjs-dist/standard_fonts")
+  .replace(/\\/g, "/")}/`;
 
 export async function extractTextFromPDF(buffer) {
 
@@ -6,6 +14,7 @@ export async function extractTextFromPDF(buffer) {
 
     const pdf = await pdfjsLib.getDocument({
       data: new Uint8Array(buffer),
+      standardFontDataUrl,
     }).promise;
 
     let fullText = "";
@@ -24,11 +33,11 @@ export async function extractTextFromPDF(buffer) {
       fullText += "\n";
     }
 
-    return fullText;
+    return fullText.trim();
 
   } catch (error) {
 
-    console.log(error);
+    console.error("PDF text extraction failed:", error);
 
     throw new Error("Failed to extract PDF text");
   }

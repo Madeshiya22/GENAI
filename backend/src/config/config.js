@@ -52,6 +52,18 @@ if (!process.env.TAVILY_API_KEY) {
   );
 }
 
+if (!process.env.PINECONE_API_KEY) {
+  throw new Error(
+    "Error: PINECONE_API_KEY is not set in the environment variables.",
+  );
+}
+
+if (!process.env.PINECONE_INDEX_NAME) {
+  throw new Error(
+    "Error: PINECONE_INDEX_NAME is not set in the environment variables.",
+  );
+}
+
 export default {
   PORT: process.env.PORT || 3000,
   MISTRAL_API_KEY: process.env.MISTRAL_API_KEY,
@@ -62,4 +74,6 @@ export default {
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
   CLIENT_URL: process.env.CLIENT_URL,
+  PINECONE_API_KEY: process.env.PINECONE_API_KEY,
+  PINECONE_INDEX_NAME: process.env.PINECONE_INDEX_NAME,
 };

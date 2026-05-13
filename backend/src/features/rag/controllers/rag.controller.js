@@ -5,23 +5,14 @@ import {
   createVectorStore,
 } from "../services/vector.service.js";
 
-import { chunkText }
-from "../utils/chunk.utils.js";
+import { chunkText } from "../utils/chunk.utils.js";
 
-import { extractTextFromPDF }
-from "../utils/pdf.utils.js";
-
+import { extractTextFromPDF } from "../utils/pdf.utils.js";
 
 // UPLOAD PDF
-export async function uploadPDF(
-  req,
-  res,
-) {
-
+export async function uploadPDF(req, res) {
   try {
-
     if (!req.file) {
-
       return res.status(400).json({
         success: false,
         message: "PDF file is required",
@@ -29,14 +20,24 @@ export async function uploadPDF(
     }
 
     // EXTRACT PDF TEXT
-    const extractedText =
-      await extractTextFromPDF(
-        req.file.buffer,
-      );
+    const extractedText = await extractTextFromPDF(req.file.buffer);
+
+    if (!extractedText) {
+      return res.status(400).json({
+        success: false,
+        message: "No readable text found in PDF",
+      });
+    }
 
     // CHUNK TEXT
-    const chunks =
-      await chunkText(extractedText);
+    const chunks = await chunkText(extractedText);
+
+    if (chunks.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid text chunks found in PDF",
+      });
+    }
 
     // CREATE VECTOR STORE
     await createVectorStore(chunks);
@@ -44,15 +45,12 @@ export async function uploadPDF(
     return res.status(200).json({
       success: true,
 
-      message:
-        "PDF processed successfully",
+      message: "PDF processed successfully",
 
       totalChunks: chunks.length,
     });
-
   } catch (error) {
-
-    console.log(error);
+    console.error(error);
 
     return res.status(500).json({
       success: false,
@@ -61,45 +59,31 @@ export async function uploadPDF(
   }
 }
 
-
 // ASK QUESTION FROM PDF
-export async function askPDFQuestion(
-  req,
-  res,
-) {
-
+export async function askPDFQuestion(req, res) {
   try {
-
-    console.log(
-      "BODY:",
-      req.body,
-    );
-
-    const question =
-      req.body?.question;
+    const question = req.body?.question?.trim();
 
     if (!question) {
-
       return res.status(400).json({
         success: false,
-        message:
-          "Question is required",
+        message: "Question is required",
       });
     }
 
     // SEARCH RELEVANT CHUNKS
-    const chunks =
-      await searchSimilarChunks(
-        question,
-      );
+    const chunks = await searchSimilarChunks(question);
+
+    if (chunks.length === 0) {
+      return res.status(200).json({
+        success: true,
+        answer: "Answer not found in PDF.",
+        chunksUsed: 0,
+      });
+    }
 
     // COMBINE CONTEXT
-    const context = chunks
-      .map(
-        (chunk) =>
-          chunk.pageContent,
-      )
-      .join("\n\n");
+    const context = chunks.map((chunk) => chunk.pageContent).join("\n\n");
 
     // PROMPT
     const prompt = `
@@ -119,27 +103,21 @@ ${question}
 `;
 
     // AI RESPONSE
-    const response =
-      await model.invoke(prompt);
+    const response = await model.invoke(prompt);
 
     return res.status(200).json({
       success: true,
 
-      answer:
-        response.content,
+      answer: response.content,
 
-      chunksUsed:
-        chunks.length,
+      chunksUsed: chunks.length,
     });
-
   } catch (error) {
-
-    console.log(error);
+    console.error(error);
 
     return res.status(500).json({
       success: false,
-      message:
-        error.message,
+      message: error.message,
     });
   }
 }
