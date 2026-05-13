@@ -13,20 +13,25 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@langchain/community": "^1.1.28",
-    "@langchain/core": "^1.1.44",
-    "@langchain/mistralai": "^1.0.8",
+    "@langchain/community": "^0.3.16",
+    "@langchain/core": "^0.3.19",
+    "@langchain/mistralai": "^0.2.0",
+    "@langchain/textsplitters": "^0.1.0",
     "@tavily/core": "^0.7.3",
+    "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
-    "langchain": "^1.4.0",
+    "langchain": "^0.3.6",
     "mongoose": "^9.6.1",
     "morgan": "^1.10.1",
+    "multer": "^2.1.1",
+    "multer-storage-cloudinary": "^4.0.0",
     "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "pdfjs-dist": "^5.6.205"
   }
 }

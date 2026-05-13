@@ -7,6 +7,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import chatRouter from "./routes/chat.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import helmet from "helmet";
+import ragRouter from "./features/rag/routes/rag.route.js";
 
 const app = express();
 
@@ -60,5 +61,15 @@ app.get("/", (req, res) => {
 app.use("/api/chat/message", chatRouter);
 
 app.use("/api/auth", authRouter);
+app.use("/api/rag", ragRouter);
+
+// ERROR HANDLING
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: "An unexpected error occurred",
+  });
+});
 
 export default app;

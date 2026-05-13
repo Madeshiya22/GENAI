@@ -1,5 +1,4 @@
 import { ChatMistralAI } from "@langchain/mistralai";
-import { createAgent } from "langchain";
 import config from "../config/config.js";
 
 const model = new ChatMistralAI({
@@ -7,16 +6,9 @@ const model = new ChatMistralAI({
   apiKey: config.MISTRAL_API_KEY,
 });
 
-const agent = createAgent({
-  model,
-  tools: [],
-});
-
 // AI-BASED WEB SEARCH DETECTION
 export async function shouldSearchWeb(message) {
-
   try {
-
     const prompt = `
 Determine whether this user query requires realtime web search.
 
@@ -47,17 +39,9 @@ Answer:
 
     const response = await model.invoke(prompt);
 
-    return response.content
-      .trim()
-      .toUpperCase()
-      .includes("YES");
-
+    return response.content.trim().toUpperCase().includes("YES");
   } catch (error) {
-
-    console.log(
-      "Web detection error:",
-      error.message
-    );
+    console.log("Web detection error:", error.message);
 
     return false;
   }
@@ -65,9 +49,7 @@ Answer:
 
 // OPTIMIZE SEARCH QUERY
 export async function optimizeSearchQuery(message) {
-
   try {
-
     const prompt = `
 Convert the user's query into an optimized web search query.
 
@@ -97,13 +79,8 @@ Optimized Search Query:
     const response = await model.invoke(prompt);
 
     return response.content.trim();
-
   } catch (error) {
-
-    console.log(
-      "Query optimization error:",
-      error.message
-    );
+    console.log("Query optimization error:", error.message);
 
     return message;
   }
@@ -111,22 +88,19 @@ Optimized Search Query:
 
 // STREAMING RESPONSE
 export async function getStream(messages) {
+  try {
+    const stream = await model.stream(messages);
 
-  const stream = await agent.stream(
-    {
-      messages,
-    },
-    {
-      streamMode: "messages",
-    },
-  );
+    return stream;
+  } catch (error) {
+    console.log("Streaming error:", error.message);
 
-  return stream;
+    throw error;
+  }
 }
 
 // GENERATE CHAT TITLE
 export async function generateTitle(message) {
-
   const prompt = `
 Generate a very short chat title 
 for this message.
@@ -145,3 +119,5 @@ Rules:
 
   return response.content.trim();
 }
+
+export default model;
