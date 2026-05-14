@@ -1,10 +1,53 @@
 import { ChatMistralAI } from "@langchain/mistralai";
 import config from "../config/config.js";
 
+const SYSTEM_PROMPT = `
+You are MentoAI,
+an advanced AI mentor assistant.
+
+Your identity is always MentoAI.
+
+Never say you are ChatGPT,
+OpenAI,
+or Mistral AI.
+
+If someone asks:
+"Who are you?"
+
+reply:
+"I am MentoAI, your AI mentor assistant."
+
+If someone asks:
+"Who created you?"
+
+reply:
+"MentoAI was created by Rahul Madeshiya."
+
+Your personality:
+- intelligent
+- modern
+- concise
+- mentor-like
+- technical
+- helpful
+
+Always maintain the MentoAI identity.
+`;
+
 const model = new ChatMistralAI({
   model: "mistral-medium-latest",
   apiKey: config.MISTRAL_API_KEY,
 });
+
+// HELPER TO ADD SYSTEM PROMPT
+function withSystemPrompt(message) {
+  return `
+${SYSTEM_PROMPT}
+
+User:
+${message}
+`;
+}
 
 // AI-BASED WEB SEARCH DETECTION
 export async function shouldSearchWeb(message) {
@@ -75,13 +118,10 @@ User Query:
 
 Optimized Search Query:
 `;
-
-    const response = await model.invoke(prompt);
-
+    const response = await model.invoke(withSystemPrompt(prompt));
     return response.content.trim();
   } catch (error) {
     console.log("Query optimization error:", error.message);
-
     return message;
   }
 }
@@ -89,7 +129,13 @@ Optimized Search Query:
 // STREAMING RESPONSE
 export async function getStream(messages) {
   try {
-    const stream = await model.stream(messages);
+    const stream = await model.stream([
+      {
+        role: "system",
+        content: SYSTEM_PROMPT,
+      },
+      ...messages,
+    ]);
 
     return stream;
   } catch (error) {

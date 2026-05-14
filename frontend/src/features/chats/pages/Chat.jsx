@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import mentoLogo from "../../../assets/mentoai_logo.png";
 import WebSearchIndicator from "../components/WebSearchIndicator/WebSearchIndicator";
 import SearchSources from "../components/SearchSources/SearchSources";
-import { AlertCircle, CheckCircle2, FileText, Loader2, Paperclip, X } from "lucide-react";
+import { Loader2, Paperclip } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useChat } from "../hooks/useChat";
 import { useRagChat } from "../hooks/useRagChat";
@@ -10,6 +10,9 @@ import Sidebar from "../components/Sidebar";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import { useAutoScroll } from "../hooks/useAutoScroll";
 import TypingIndicator from "../components/TypingIndicator.jsx";
+import AttachmentDropzone from "../components/attachments/AttachmentDropzone";
+import AttachmentPreview from "../components/attachments/AttachmentPreview";
+import MessageAttachmentRenderer from "../components/attachments/MessageAttachmentRenderer";
 import "../../../styles/chat.scss";
 
 const SUGGESTION_CHIPS = [
@@ -19,12 +22,61 @@ const SUGGESTION_CHIPS = [
   { icon: "🐛", text: "Debug my code", prompt: "Help me debug this code: function add(a, b) { return a - b; }" },
 ];
 
+const ACCEPTED_ATTACHMENT_TYPES = "application/pdf,image/*,.pdf";
+const ATTACHMENT_INPUT_ID = "chat-attachment-input";
+
+function getAttachmentKind(file) {
+  if (!file) return null;
+
+  if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+    return "pdf";
+  }
+
+  if (file.type.startsWith("image/")) {
+    return "image";
+  }
+
+  return null;
+}
+
+function createAttachment(file) {
+  const kind = getAttachmentKind(file);
+
+  if (!kind) return null;
+
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    file,
+    kind,
+    name: file.name || (kind === "image" ? "Pasted image" : "Attached PDF"),
+    size: file.size,
+    mimeType: file.type,
+    previewUrl: kind === "image" ? URL.createObjectURL(file) : "",
+    status: kind === "pdf" ? "uploading" : "ready",
+  };
+}
+
+function toMessageAttachment(attachment) {
+  return {
+    id: attachment.id,
+    kind: attachment.kind,
+    name: attachment.name,
+    size: attachment.size,
+    mimeType: attachment.mimeType,
+    previewUrl: attachment.previewUrl,
+    status: attachment.status,
+  };
+}
+
 const Chat = () => {
   const [message, setMessage] = useState("");
   const [sendError, setSendError] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState([]);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const textareaRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const dragDepthRef = useRef(0);
+  const objectUrlsRef = useRef([]);
 
   const { handleSendMessage } = useChat();
   const {
@@ -32,16 +84,22 @@ const Chat = () => {
     isPDFReady,
     isUploadingPDF,
     resetPDF,
-    uploadedPDF,
-    uploadError,
     uploadSelectedPDF,
-    uploadStatus,
   } = useRagChat();
 
   const { messages, activeChatId, streaming, tempChatActive } = useSelector((state) => state.chat);
   const { isSearchingWeb, sources } = useSelector((state) => state.webSearch);
 
   const messagesEndRef = useAutoScroll(messages);
+  const hasUploadingAttachments = pendingAttachments.some(
+    (attachment) => attachment.status === "uploading",
+  );
+  const hasAttachmentErrors = pendingAttachments.some(
+    (attachment) => attachment.status === "error",
+  );
+  const hasReadyPDF = pendingAttachments.some(
+    (attachment) => attachment.kind === "pdf" && attachment.status === "ready",
+  );
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -56,27 +114,116 @@ const Chat = () => {
     textareaRef.current?.focus();
   }, [activeChatId, tempChatActive]);
 
+  useEffect(() => {
+    return () => {
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  const addFiles = (files) => {
+    const incomingFiles = Array.from(files || []);
+    const attachments = incomingFiles
+      .map(createAttachment)
+      .filter(Boolean);
+
+    if (!attachments.length) {
+      if (incomingFiles.length) {
+        setSendError("Only PDF and image attachments are supported.");
+      }
+
+      return 0;
+    }
+
+    attachments.forEach((attachment) => {
+      if (attachment.previewUrl) {
+        objectUrlsRef.current.push(attachment.previewUrl);
+      }
+    });
+
+    setSendError("");
+    setPendingAttachments((current) => [...current, ...attachments]);
+
+    attachments
+      .filter((attachment) => attachment.kind === "pdf")
+      .forEach(async (attachment) => {
+        const uploaded = await uploadSelectedPDF(attachment.file);
+
+        setPendingAttachments((current) =>
+          current.map((item) =>
+            item.id === attachment.id
+              ? {
+                  ...item,
+                  status: uploaded ? "ready" : "error",
+                  error: uploaded ? "" : "PDF upload failed",
+                }
+              : item,
+          ),
+        );
+      });
+
+    textareaRef.current?.focus();
+    return attachments.length;
+  };
+
+  const removeAttachment = (attachmentId) => {
+    setPendingAttachments((current) => {
+      const removed = current.find((attachment) => attachment.id === attachmentId);
+      const next = current.filter((attachment) => attachment.id !== attachmentId);
+
+      if (removed?.previewUrl) {
+        URL.revokeObjectURL(removed.previewUrl);
+        objectUrlsRef.current = objectUrlsRef.current.filter((url) => url !== removed.previewUrl);
+      }
+
+      if (!next.some((attachment) => attachment.kind === "pdf")) {
+        resetPDF();
+      }
+
+      return next;
+    });
+  };
+
   const handleSubmit = async (customMessage) => {
     const text = customMessage || message;
     const trimmed = text.trim();
 
     if (!trimmed || streaming) return;
     if (!activeChatId && !tempChatActive) return;
-    if (isUploadingPDF) {
-      setSendError("Please wait until the PDF finishes uploading.");
+    if (hasUploadingAttachments || isUploadingPDF) {
+      setSendError("Please wait until attachments finish uploading.");
+      return;
+    }
+    if (hasAttachmentErrors) {
+      setSendError("Remove failed attachments before sending.");
       return;
     }
 
+    const attachmentsForMessage = pendingAttachments
+      .filter((attachment) => attachment.status === "ready")
+      .map(toMessageAttachment);
+    const pendingSnapshot = pendingAttachments;
+    const shouldUseRag = hasReadyPDF && isPDFReady;
+
+    setMessage("");
+    setPendingAttachments([]);
+    setSendError("");
+
     try {
-      const sent = isPDFReady
-        ? await askUploadedPDF(text)
-        : await handleSendMessage(activeChatId, text);
+      const sent = shouldUseRag
+        ? await askUploadedPDF(text, attachmentsForMessage)
+        : await handleSendMessage(activeChatId, text, attachmentsForMessage);
 
       if (sent) {
-        setMessage("");
-        setSendError("");
+        if (hasReadyPDF) {
+          resetPDF();
+        }
+      } else {
+        setMessage(text);
+        setPendingAttachments(pendingSnapshot);
       }
     } catch (error) {
+      setMessage(text);
+      setPendingAttachments(pendingSnapshot);
       setSendError(error.message || "Unable to send message");
     }
   };
@@ -93,25 +240,60 @@ const Chat = () => {
     setMessage(event.target.value);
   };
 
-  const handleAttachmentClick = () => {
-    if (streaming || isUploadingPDF) return;
-
-    fileInputRef.current?.click();
-  };
-
-  const handlePDFChange = async (event) => {
-    const file = event.target.files?.[0];
+  const handleFileChange = (event) => {
+    const files = Array.from(event.target.files || []);
     event.target.value = "";
 
-    if (!file) return;
+    addFiles(files);
+  };
 
-    setSendError("");
+  const handlePaste = (event) => {
+    const clipboardFiles = Array.from(event.clipboardData?.files || []);
+    const itemFiles = Array.from(event.clipboardData?.items || [])
+      .filter((item) => item.kind === "file")
+      .map((item) => item.getAsFile())
+      .filter(Boolean);
+    const files = clipboardFiles.length ? clipboardFiles : itemFiles;
+    const addedCount = addFiles(files);
 
-    const uploaded = await uploadSelectedPDF(file);
-
-    if (!uploaded) {
-      textareaRef.current?.focus();
+    if (addedCount > 0) {
+      event.preventDefault();
     }
+  };
+
+  const handleDragEnter = (event) => {
+    if (!Array.from(event.dataTransfer?.types || []).includes("Files")) return;
+
+    event.preventDefault();
+    dragDepthRef.current += 1;
+    setIsDraggingFiles(true);
+  };
+
+  const handleDragOver = (event) => {
+    if (!Array.from(event.dataTransfer?.types || []).includes("Files")) return;
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDragLeave = (event) => {
+    if (!Array.from(event.dataTransfer?.types || []).includes("Files")) return;
+
+    event.preventDefault();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+
+    if (dragDepthRef.current === 0) {
+      setIsDraggingFiles(false);
+    }
+  };
+
+  const handleDrop = (event) => {
+    if (!Array.from(event.dataTransfer?.types || []).includes("Files")) return;
+
+    event.preventDefault();
+    dragDepthRef.current = 0;
+    setIsDraggingFiles(false);
+    addFiles(event.dataTransfer.files);
   };
 
   const handleSuggestionClick = (prompt) => {
@@ -133,7 +315,14 @@ const Chat = () => {
         />
       </div>
 
-      <section className="chat">
+      <section
+        className={`chat ${isDraggingFiles ? "is-dragging" : ""}`}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <AttachmentDropzone active={isDraggingFiles} />
         <header className="chat__header-mobile">
           <button className="chat__menu-btn" onClick={() => setIsSidebarOpen(true)}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -172,7 +361,10 @@ const Chat = () => {
                 <div key={index} className={`message ${msg.role}`}>
                   {msg.role === "user" ? (
                     <div className="message__bubble">
-                      <div className="message__content">{msg.content}</div>
+                      <div className="message__content">
+                        <MessageAttachmentRenderer attachments={msg.attachments} />
+                        {msg.content && <div className="message__text">{msg.content}</div>}
+                      </div>
                     </div>
                   ) : (
                     <div className="message__bubble">
@@ -246,87 +438,78 @@ const Chat = () => {
         )}
 
         <div className="chat__input">
-          {(uploadedPDF || uploadError) && (
-            <div className={`chat__upload-badge ${uploadStatus}`} role="status" aria-live="polite">
-              <div className="chat__upload-status-icon">
-                {uploadStatus === "uploading" && <Loader2 size={14} />}
-                {uploadStatus === "ready" && <CheckCircle2 size={14} />}
-                {uploadStatus === "error" && <AlertCircle size={14} />}
-              </div>
-              <div className="chat__upload-copy">
-                <span>
-                  {uploadStatus === "ready"
-                    ? "PDF Ready"
-                    : uploadStatus === "uploading"
-                      ? "Uploading PDF"
-                      : "PDF upload failed"}
-                </span>
-                <small>{uploadError || uploadedPDF?.name}</small>
-              </div>
-              {(uploadStatus === "ready" || uploadStatus === "error") && (
-                <button
-                  type="button"
-                  className="chat__upload-clear"
-                  onClick={resetPDF}
-                  aria-label="Remove PDF"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="chat__input-wrapper">
+          <div className={`chat__input-wrapper ${pendingAttachments.length ? "has-attachments" : ""}`}>
             <input
-              ref={fileInputRef}
+              id={ATTACHMENT_INPUT_ID}
               type="file"
-              accept="application/pdf,.pdf"
+              accept={ACCEPTED_ATTACHMENT_TYPES}
               className="chat__file-input"
-              onChange={handlePDFChange}
-            />
-
-            <button
-              type="button"
-              className={`chat__attach-btn ${isPDFReady ? "ready" : ""}`}
-              onClick={handleAttachmentClick}
-              disabled={streaming || isUploadingPDF}
-              aria-label="Upload PDF"
-              title="Upload PDF"
-            >
-              {isUploadingPDF ? (
-                <Loader2 size={18} />
-              ) : isPDFReady ? (
-                <FileText size={18} />
-              ) : (
-                <Paperclip size={18} />
-              )}
-            </button>
-
-            <textarea
-              ref={textareaRef}
-              placeholder="Message Mento AI..."
-              value={message}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              rows={1}
+              multiple
               disabled={streaming}
+              onChange={handleFileChange}
             />
 
-            <button
-              className="chat__send-btn"
-              onClick={() => handleSubmit()}
-              disabled={streaming || isUploadingPDF || !message.trim() || (!activeChatId && !tempChatActive)}
-              aria-label="Send message"
-            >
-              {streaming ? (
-                <div className="chat__send-spinner" />
-              ) : (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              )}
-            </button>
+            <AttachmentPreview
+              attachments={pendingAttachments}
+              onRemove={removeAttachment}
+            />
+
+            <div className="chat__composer-row">
+              <label
+                htmlFor={ATTACHMENT_INPUT_ID}
+                className={`chat__attach-btn ${pendingAttachments.length ? "ready" : ""}`}
+                aria-disabled={streaming}
+                aria-label="Attach files"
+                title="Attach files"
+                tabIndex={streaming ? -1 : 0}
+                onClick={(event) => {
+                  if (streaming) event.preventDefault();
+                }}
+                onKeyDown={(event) => {
+                  if (streaming) return;
+
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    document.getElementById(ATTACHMENT_INPUT_ID)?.click();
+                  }
+                }}
+              >
+                {hasUploadingAttachments ? <Loader2 size={18} /> : <Paperclip size={18} />}
+              </label>
+
+              <textarea
+                ref={textareaRef}
+                placeholder="Message Mento AI..."
+                value={message}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
+                rows={1}
+                disabled={streaming}
+              />
+
+              <button
+                className="chat__send-btn"
+                onClick={() => handleSubmit()}
+                disabled={
+                  streaming ||
+                  hasUploadingAttachments ||
+                  hasAttachmentErrors ||
+                  !message.trim() ||
+                  (!activeChatId && !tempChatActive)
+                }
+                aria-label="Send message"
+              >
+                {streaming ? (
+                  <div className="chat__send-spinner" />
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
           <span className="chat__disclaimer">Mento AI can make mistakes. Verify important information.</span>
         </div>

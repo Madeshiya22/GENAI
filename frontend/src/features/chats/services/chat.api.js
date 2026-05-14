@@ -6,6 +6,7 @@ export async function sendMessage(
   options = {},
 ) {
   const {
+    attachments = [],
     signal,
     onTitle,
     onSearching,
@@ -21,6 +22,7 @@ export async function sendMessage(
       signal,
       body: JSON.stringify({
         message: userInput,
+        attachments,
       }),
     });
 

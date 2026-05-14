@@ -74,7 +74,7 @@ export function useRagChat() {
     }
   };
 
-  const askUploadedPDF = async (question) => {
+  const askUploadedPDF = async (question, attachments = []) => {
     const trimmedQuestion = question.trim();
 
     if (!trimmedQuestion || !isPDFReady || isAskingPDF) {
@@ -94,6 +94,7 @@ export function useRagChat() {
       addMessage({
         role: "user",
         content: trimmedQuestion,
+        attachments,
         timestamp: Date.now(),
       }),
     );
@@ -123,7 +124,9 @@ export function useRagChat() {
     } catch (error) {
       dispatch(removeLastMessage());
       dispatch(removeLastMessage());
-      throw new Error(getErrorMessage(error, "Unable to answer from PDF."));
+      throw new Error(getErrorMessage(error, "Unable to answer from PDF."), {
+        cause: error,
+      });
     } finally {
       dispatch(setStreaming(false));
       pendingQuestionRef.current = "";

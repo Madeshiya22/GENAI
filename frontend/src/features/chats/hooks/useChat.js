@@ -22,14 +22,14 @@ let pendingMessageText = "";
 
 export const useChat = () => {
   const dispatch = useDispatch();
-  const { activeChatId, tempChatActive } = useSelector((state) => state.chat);
+  const { tempChatActive } = useSelector((state) => state.chat);
 
   const abortCurrentStream = () => {
     activeStreamAbortController?.abort();
   };
 
   // SEND MESSAGE (handles both temp and real chats)
-  const handleSendMessage = async (chatId, userInput) => {
+  const handleSendMessage = async (chatId, userInput, attachments = []) => {
     const trimmedMessage = userInput.trim();
 
     if (!trimmedMessage) {
@@ -71,6 +71,7 @@ export const useChat = () => {
       addMessage({
         role: "user",
         content: trimmedMessage,
+        attachments,
         timestamp: Date.now(),
       }),
     );
@@ -96,6 +97,7 @@ export const useChat = () => {
           dispatch(appendContentToLastMessage({ chunk }));
         },
         {
+          attachments,
           signal: activeStreamAbortController.signal,
 
           onTitle: (title) => {

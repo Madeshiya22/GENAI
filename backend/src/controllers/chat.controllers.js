@@ -38,7 +38,7 @@ export async function createNewChat(req, res) {
 // HANDLE CHAT MESSAGE
 export async function handleChat(req, res) {
   try {
-    const { message } = req.body;
+    const { message, attachments = [] } = req.body;
 
     const { chatId } = req.params;
 
@@ -85,6 +85,19 @@ export async function handleChat(req, res) {
       role: "user",
 
       content: message,
+
+      attachments: Array.isArray(attachments)
+        ? attachments
+            .filter((attachment) => attachment?.name && attachment?.kind)
+            .map((attachment) => ({
+              id: attachment.id,
+              kind: attachment.kind,
+              name: attachment.name,
+              size: attachment.size,
+              mimeType: attachment.mimeType,
+              status: attachment.status || "ready",
+            }))
+        : [],
     });
 
     // GET ALL PREVIOUS MESSAGES
