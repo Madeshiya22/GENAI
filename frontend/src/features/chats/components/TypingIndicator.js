@@ -1,5 +1,3 @@
-import React from "react";
-
 import "../../../styles/TypingIndicator.scss";
 
 const TypingIndicator = () => {

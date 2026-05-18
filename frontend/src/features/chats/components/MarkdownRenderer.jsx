@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import "../../../styles/markdown.scss";
 
 const CopyButton = ({ text }) => {
@@ -45,28 +44,24 @@ const MarkdownRenderer = ({ content }) => {
         components={{
           // ─── Code blocks ──────────────────
           code({ inline, className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || "");
+            const match = /language-([^\s]+)/.exec(className || "");
             const codeText = String(children).replace(/\n$/, "");
+            const language = match?.[1] || "text";
 
             if (!inline && match) {
               return (
                 <div className="md-code">
                   <div className="md-code__header">
-                    <span className="md-code__lang">{match[1]}</span>
+                    <span className="md-code__lang">{language}</span>
                     <CopyButton text={codeText} />
                   </div>
                   <SyntaxHighlighter
-                    style={oneDark}
-                    language={match[1]}
+                    className="md-code__syntax"
+                    language={language}
                     PreTag="div"
-                    customStyle={{
-                      margin: 0,
-                      borderRadius: "0 0 10px 10px",
-                      padding: "16px 18px",
-                      fontSize: "13px",
-                      lineHeight: "1.6",
-                      background: "#1a1b26",
-                    }}
+                    useInlineStyles={false}
+                    codeTagProps={{ className: "md-code__content" }}
+                    customStyle={{ margin: 0 }}
                     {...props}
                   >
                     {codeText}

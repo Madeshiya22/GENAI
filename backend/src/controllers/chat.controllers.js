@@ -1,14 +1,6 @@
 import mongoose from "mongoose";
-
-import {
-  getStream,
-  generateTitle,
-  shouldSearchWeb,
-  optimizeSearchQuery,
-} from "../services/ai.service.js";
-
-import { searchWeb } from "../services/tavily.service.js";
-
+import { generateTitle } from "../services/ai.service.js";
+import { runAgent } from "../features/agent/service/agent.service.js";
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
 
@@ -91,30 +83,19 @@ export async function handleChat(req, res) {
             .filter((attachment) => attachment?.name && attachment?.kind)
             .map((attachment) => ({
               id: attachment.id,
+
               kind: attachment.kind,
+
               name: attachment.name,
+
               size: attachment.size,
+
               mimeType: attachment.mimeType,
+
               status: attachment.status || "ready",
             }))
         : [],
     });
-
-    // GET ALL PREVIOUS MESSAGES
-    const previousMessages = await messageModel.find({
-      chat: chatId,
-    });
-
-    // FORMAT FOR AI
-    const formattedMessages = previousMessages.map((msg) => ({
-      role: msg.role,
-
-      content: msg.content,
-    }));
-
-    const shouldSearch = await shouldSearchWeb(message);
-
-    let webResults = [];
 
     // SSE HEADERS
     res.setHeader("Content-Type", "text/event-stream");
@@ -123,113 +104,30 @@ export async function handleChat(req, res) {
 
     res.setHeader("Connection", "keep-alive");
 
-    // WEB SEARCH
-    if (shouldSearch) {
+    // RUN LANGGRAPH AGENT
+    // build previous messages array from stored messages
+    const previousMessagesDocs = await messageModel
+      .find({ chat: chatId })
+      .sort({ _id: 1 })
+      .lean();
 
-      res.write(
-        `data:${JSON.stringify({
-          type: "searching",
-        })}\n\n`
-      );
+    const previousMessages = previousMessagesDocs.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
 
-      // OPTIMIZE QUERY
-      const optimizedQuery =
-        await optimizeSearchQuery(message);
-
-      // SEARCH WEB
-      webResults =
-        await searchWeb(optimizedQuery);
-
-      // SEND SOURCES
-      res.write(
-        `data:${JSON.stringify({
-          type: "sources",
-          sources: webResults,
-        })}\n\n`
-      );
-    }
-
-    // PREPARE FINAL AI MESSAGES
-    let finalMessages = [...formattedMessages];
-
-    if (webResults.length > 0) {
-
-      const formattedResults = webResults
-        .map(
-          (result, index) =>
-            `${index + 1}. ${result.title}\n${result.content}`
-        )
-        .join("\n\n");
-
-      finalMessages.push({
-        role: "system",
-        content: `
-You MUST use these realtime web search results while answering.
-
-Rules:
-- Prefer factual information from the sources
-- If multiple sources disagree, mention uncertainty
-- Keep the answer concise and accurate
-- Mention important dates or teams if available
-
-Web Results:
-
-${formattedResults}
-        `,
-      });
-    }
-
-    // GET AI STREAM
-    const stream = await getStream(finalMessages);
-
-    let fullResponse = "";
-    let connectionClosed = false;
-
-    req.on("close", () => {
-      connectionClosed = true;
+    const response = await runAgent({
+      input: message,
+      messages: previousMessages,
     });
+    let fullResponse = response;
 
-    // STREAM RESPONSE
-    for await (const chunk of stream) {
-
-      if (connectionClosed) {
-        break;
-      }
-
-      // LangChain stream parsing
-      let aiChunk = "";
-
-      if (Array.isArray(chunk)) {
-
-        const [msg] = chunk;
-
-        aiChunk = msg?.content || "";
-
-      } else if (chunk?.choices) {
-
-        aiChunk =
-          chunk.choices[0]?.delta?.content || "";
-
-      } else if (chunk?.content !== undefined) {
-
-        aiChunk = chunk.content || "";
-      }
-
-      if (aiChunk) {
-
-        fullResponse += aiChunk;
-
-        res.write(
-          `data:${JSON.stringify({
-            chunk: aiChunk,
-          })}\n\n`
-        );
-      }
-    }
-
-    if (connectionClosed) {
-      return;
-    }
+    // SEND RESPONSE
+    res.write(
+      `data:${JSON.stringify({
+        chunk: fullResponse,
+      })}\n\n`,
+    );
 
     // SAVE AI RESPONSE
     await messageModel.create({
@@ -242,40 +140,27 @@ ${formattedResults}
 
     // AUTO TITLE GENERATION
     if (chat.title === "New Chat") {
-
       try {
-
-        const generatedTitle =
-          await generateTitle(message);
+        const generatedTitle = await generateTitle(message);
 
         chat.title = generatedTitle;
 
         await chat.save();
 
         // SEND TITLE UPDATE
-        if (!connectionClosed) {
+        res.write(
+          `data:${JSON.stringify({
+            type: "title",
 
-          res.write(
-            `data:${JSON.stringify({
-              type: "title",
-              title: generatedTitle,
-            })}\n\n`
-          );
-        }
-
-      } catch (titleError) {
-
-        console.log(
-          "Title generation failed:",
-          titleError.message
+            title: generatedTitle,
+          })}\n\n`,
         );
+      } catch (titleError) {
+        console.log("Title generation failed:", titleError.message);
       }
     }
-
     res.end();
-
   } catch (error) {
-
     console.log(error);
 
     return res.status(500).json({
@@ -289,7 +174,6 @@ ${formattedResults}
 // GET ALL USER CHATS
 export async function getAllChats(req, res) {
   try {
-
     const chats = await chatModel
       .find({
         user: req.user.id,
@@ -305,9 +189,7 @@ export async function getAllChats(req, res) {
 
       chats,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
 
@@ -319,11 +201,9 @@ export async function getAllChats(req, res) {
 // GET SINGLE CHAT MESSAGES
 export async function getChatMessages(req, res) {
   try {
-
     const { chatId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
-
       return res.status(400).json({
         success: false,
 
@@ -335,7 +215,6 @@ export async function getChatMessages(req, res) {
     const chat = await chatModel.findById(chatId);
 
     if (!chat) {
-
       return res.status(404).json({
         success: false,
 
@@ -345,7 +224,6 @@ export async function getChatMessages(req, res) {
 
     // SECURITY CHECK
     if (chat.user.toString() !== req.user.id) {
-
       return res.status(403).json({
         success: false,
 
@@ -363,9 +241,7 @@ export async function getChatMessages(req, res) {
 
       messages,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
 
@@ -377,11 +253,9 @@ export async function getChatMessages(req, res) {
 // DELETE CHAT
 export async function deleteChat(req, res) {
   try {
-
     const { chatId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
-
       return res.status(400).json({
         success: false,
 
@@ -393,7 +267,6 @@ export async function deleteChat(req, res) {
     const chat = await chatModel.findById(chatId);
 
     if (!chat) {
-
       return res.status(404).json({
         success: false,
 
@@ -403,7 +276,6 @@ export async function deleteChat(req, res) {
 
     // SECURITY CHECK
     if (chat.user.toString() !== req.user.id) {
-
       return res.status(403).json({
         success: false,
 
@@ -424,9 +296,7 @@ export async function deleteChat(req, res) {
 
       message: "Chat deleted successfully",
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
 

@@ -11,6 +11,20 @@ export const useAuth = () => {
   const hasCheckedRef = useRef(false);
 
   useEffect(() => {
+    async function checkAuth() {
+      try {
+        const data = await getCurrentUser();
+
+        if (data?.success) {
+          dispatch(setUser(data.user));
+        } else {
+          dispatch(clearUser());
+        }
+      } catch {
+        dispatch(clearUser());
+      }
+    }
+
     if (hasCheckedRef.current) {
       return;
     }
@@ -26,19 +40,5 @@ export const useAuth = () => {
     }
 
     checkAuth();
-  }, []);
-
-  async function checkAuth() {
-    try {
-      const data = await getCurrentUser();
-
-      if (data?.success) {
-        dispatch(setUser(data.user));
-      } else {
-        dispatch(clearUser());
-      }
-    } catch (error) {
-      dispatch(clearUser());
-    }
-  }
+  }, [dispatch]);
 };

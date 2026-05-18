@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import mentoLogo from "../../../assets/mentoai_logo.png";
 import { useDispatch, useSelector } from "react-redux";
+import { MessageSquare, Plus, Trash2, X } from "lucide-react";
 import {
   setChats,
   setMessages,
@@ -10,7 +11,6 @@ import {
   startTempChat,
 } from "../state/chat.slice";
 import {
-  createChat,
   deleteChat,
   getChats,
   getMessages,
@@ -19,12 +19,15 @@ import { clearUser } from "../../auth/state/auth.slice";
 import { logoutUser } from "../../auth/services/auth.api";
 import { useChat } from "../hooks/useChat";
 import DeleteChatDialog from "../components/DeleteChatDialog";
+import SidebarUserMenu from "./SidebarUserMenu";
+import ThemeToggle from "./ThemeToggle";
 import "../../../styles/sidebar.scss";
 
 const Sidebar = ({ onChatSelect, onClose }) => {
   const dispatch = useDispatch();
   const { chats, activeChatId, streaming, messages, tempChatActive } =
     useSelector((state) => state.chat);
+  const { user } = useSelector((state) => state.auth);
   const { abortCurrentStream } = useChat();
 
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -32,13 +35,7 @@ const Sidebar = ({ onChatSelect, onClose }) => {
   const [deleteError, setDeleteError] = useState("");
   const snapshotRef = useRef(null);
 
-  // INITIALIZE CHATS
-  useEffect(() => {
-    initializeChats();
-  }, []);
-
-  // LOAD ALL CHATS
-  async function initializeChats() {
+  const initializeChats = useCallback(async () => {
     try {
       const data = await getChats();
       const fetchedChats = data?.chats || [];
@@ -57,13 +54,16 @@ const Sidebar = ({ onChatSelect, onClose }) => {
       console.log("Failed to initialize chats:", error);
       dispatch(startTempChat());
     }
-  }
+  }, [dispatch]);
 
-  // FETCH CHATS (refresh list)
-  async function fetchChats() {
+  useEffect(() => {
+    initializeChats();
+  }, [initializeChats]);
+
+  const fetchChats = useCallback(async () => {
     const data = await getChats();
     dispatch(setChats(data?.chats || []));
-  }
+  }, [dispatch]);
 
   // SMART NEW CHAT — only creates temp, no API call
   function handleNewChat() {
@@ -163,10 +163,7 @@ const Sidebar = ({ onChatSelect, onClose }) => {
   return (
     <aside className="sidebar">
       <button className="sidebar__close-btn" onClick={onClose} aria-label="Close sidebar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
+        <X size={20} />
       </button>
 
       <div className="sidebar__brand">
@@ -179,9 +176,7 @@ const Sidebar = ({ onChatSelect, onClose }) => {
         onClick={handleNewChat}
         disabled={tempChatActive || streaming}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
+        <Plus size={16} />
         New Chat
       </button>
 
@@ -189,9 +184,7 @@ const Sidebar = ({ onChatSelect, onClose }) => {
         {/* Temp chat entry */}
         {tempChatActive && (
           <div className="sidebar__chat active temp">
-            <svg className="sidebar__chat-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-            </svg>
+            <MessageSquare className="sidebar__chat-icon" size={16} />
             <span className="sidebar__chat-title">New Chat</span>
           </div>
         )}
@@ -203,9 +196,7 @@ const Sidebar = ({ onChatSelect, onClose }) => {
             className={`sidebar__chat ${activeChatId === chat._id ? "active" : ""}`}
             onClick={() => handleOpenChat(chat._id)}
           >
-            <svg className="sidebar__chat-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-            </svg>
+            <MessageSquare className="sidebar__chat-icon" size={16} />
             <span className="sidebar__chat-title">{chat.title}</span>
 
             <button
@@ -215,10 +206,7 @@ const Sidebar = ({ onChatSelect, onClose }) => {
               aria-label={`Delete ${chat.title}`}
               disabled={deleteLoading}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-              </svg>
+              <Trash2 size={14} />
             </button>
           </div>
         ))}
@@ -238,14 +226,10 @@ const Sidebar = ({ onChatSelect, onClose }) => {
         onConfirm={handleConfirmDelete}
       />
 
-      <button className="sidebar__logout" onClick={handleLogout}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-          <polyline points="16 17 21 12 16 7" />
-          <line x1="21" y1="12" x2="9" y2="12" />
-        </svg>
-        Logout
-      </button>
+      <div className="sidebar__footer">
+        <ThemeToggle />
+        <SidebarUserMenu user={user} onLogout={handleLogout} />
+      </div>
     </aside>
   );
 };

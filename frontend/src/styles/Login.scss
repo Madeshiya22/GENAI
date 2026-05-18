@@ -28,7 +28,7 @@
     &--2 {
       width: 350px;
       height: 350px;
-      background: #6246ea;
+      background: var(--accent-hover);
       bottom: -100px;
       left: -80px;
       animation: orbFloat2 12s ease-in-out infinite;
@@ -37,7 +37,7 @@
     &--3 {
       width: 250px;
       height: 250px;
-      background: #4f46e5;
+      background: var(--accent);
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -50,7 +50,7 @@
   &__card {
     position: relative;
     z-index: 1;
-    background: rgba(18, 18, 26, 0.8);
+    background: var(--bg-elevated);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--border-strong);
@@ -63,9 +63,9 @@
     min-width: 380px;
     max-width: 420px;
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 0 0 1px var(--border),
       var(--shadow-lg),
-      0 0 80px rgba(124, 92, 252, 0.08);
+      var(--shadow-glow);
     animation: cardAppear 0.5s ease;
   }
 
@@ -80,7 +80,7 @@
       height: auto;
       border-radius: 20%;
       object-fit: contain;
-      filter: drop-shadow(0 4px 24px rgba(124, 92, 252, 0.25));
+      filter: drop-shadow(0 4px 24px var(--accent-glow));
     }
   }
 
@@ -222,7 +222,7 @@
 
 @keyframes iconPulse {
   0%, 100% { box-shadow: 0 8px 32px var(--accent-glow); }
-  50% { box-shadow: 0 8px 48px rgba(124, 92, 252, 0.35); }
+  50% { box-shadow: 0 8px 48px var(--accent-glow); }
 }
 
 // ─── Responsive ──────────────────────────

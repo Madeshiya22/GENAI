@@ -1,4 +1,3 @@
-import React from "react";
 import mentoLogo from "../../../assets/mentoai_logo.png";
 import { API_BASE_URL } from "../../../config/config.js";
 import "../../../styles/Login.scss";
