@@ -8,7 +8,11 @@ export async function runAgent({ input, messages = [] }) {
       messages,
     });
 
-    return result.response;
+    return {
+      response: result.response,
+      route: result.route,
+      sources: result.sources || [],
+    };
   } catch (error) {
     console.log(error);
 

@@ -100,10 +100,13 @@ ${buildSearchContext(sources)}
   } catch (error) {
     console.log("Web node error:", error.message);
 
-  return {
-    ...state,
+    return {
+      ...state,
 
-    response:
-      "WEB SEARCH NODE WORKING",
-  };
+      sources: [],
+
+      response:
+        "I could not complete the realtime web search right now. Please try again in a moment.",
+    };
+  }
 }

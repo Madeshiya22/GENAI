@@ -39,6 +39,12 @@ export async function extractTextFromPDF(buffer) {
 
     console.error("PDF text extraction failed:", error);
 
-    throw new Error("Failed to extract PDF text");
+    const extractionError = new Error(
+      "Unable to read this PDF. Please upload a text-based, unlocked PDF.",
+    );
+
+    extractionError.statusCode = 400;
+
+    throw extractionError;
   }
 }

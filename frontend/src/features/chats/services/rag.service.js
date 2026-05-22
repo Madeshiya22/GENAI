@@ -25,12 +25,13 @@ export async function uploadPDF(file) {
 }
 
 // ASK PDF QUESTION
-export async function askPDFQuestion(question) {
+export async function askPDFQuestion(question, documentId) {
   try {
     const response = await axios.post(
       `${API_BASE_URL}/api/rag/ask`,
       {
         question,
+        documentId,
       },
       {
         withCredentials: true,

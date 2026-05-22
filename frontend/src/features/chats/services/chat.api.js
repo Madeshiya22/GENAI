@@ -70,7 +70,7 @@ export async function sendMessage(
               onSearching
             ) {
 
-              onSearching(true);
+              onSearching(data.searching ?? true);
 
             } else if (
               data.type === "sources" &&

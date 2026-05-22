@@ -22,4 +22,10 @@ export const agentState = {
 
     default: () => "",
   },
+
+  sources: {
+    value: (x, y) => y ?? x,
+
+    default: () => [],
+  },
 };

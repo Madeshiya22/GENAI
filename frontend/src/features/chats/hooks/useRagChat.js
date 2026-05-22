@@ -28,11 +28,17 @@ export function useRagChat() {
   const [uploadError, setUploadError] = useState("");
   const [isAskingPDF, setIsAskingPDF] = useState(false);
 
-  const isPDFReady = uploadStatus === "ready" && Boolean(uploadedPDF);
+  const isPDFReady =
+    uploadStatus === "ready" && Boolean(uploadedPDF?.documentId);
   const isUploadingPDF = uploadStatus === "uploading";
 
   const uploadSelectedPDF = async (file) => {
-    if (!file) return false;
+    if (!file) {
+      return {
+        success: false,
+        error: "No file selected.",
+      };
+    }
 
     const isPDF =
       file.type === PDF_MIME_TYPE ||
@@ -42,7 +48,10 @@ export function useRagChat() {
       setUploadStatus("error");
       setUploadError("Please select a PDF file.");
       setUploadedPDF(null);
-      return false;
+      return {
+        success: false,
+        error: "Please select a PDF file.",
+      };
     }
 
     setUploadStatus("uploading");
@@ -62,15 +71,26 @@ export function useRagChat() {
       setUploadedPDF({
         name: file.name,
         size: file.size,
+        documentId: data?.documentId,
         totalChunks: data?.totalChunks,
       });
       setUploadStatus("ready");
-      return true;
+      return {
+        success: true,
+        documentId: data?.documentId,
+        totalChunks: data?.totalChunks,
+      };
     } catch (error) {
+      const errorMessage = getErrorMessage(error, "Unable to upload PDF.");
+
       setUploadStatus("error");
       setUploadedPDF(null);
-      setUploadError(getErrorMessage(error, "Unable to upload PDF."));
-      return false;
+      setUploadError(errorMessage);
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
     }
   };
 
@@ -108,7 +128,10 @@ export function useRagChat() {
     );
 
     try {
-      const data = await askPDFQuestion(trimmedQuestion);
+      const data = await askPDFQuestion(
+        trimmedQuestion,
+        uploadedPDF?.documentId,
+      );
 
       if (data?.success === false) {
         throw new Error(data?.message || "Unable to answer from PDF.");

@@ -1,24 +1,50 @@
 import { tavily } from "@tavily/core";
-import  config  from "../config/config.js";
+import config from "../config/config.js";
 
 const tvly = tavily({
   apiKey: config.TAVILY_API_KEY,
 });
 
+function getSearchTopic(query) {
+  const normalizedQuery = query.toLowerCase();
+
+  if (/\b(stock|stocks|share price|market cap|crypto|bitcoin|ethereum|price)\b/.test(normalizedQuery)) {
+    return "finance";
+  }
+
+  if (/\b(news|latest|breaking|headline|headlines|today|current|recent|update|updates)\b/.test(normalizedQuery)) {
+    return "news";
+  }
+
+  return "general";
+}
+
 export async function searchWeb(query) {
-
   try {
-
     const response = await tvly.search(query, {
+      searchDepth: "advanced",
+      topic: getSearchTopic(query),
+      timeRange: "day",
       maxResults: 5,
+      includeAnswer: "advanced",
+      includeRawContent: "text",
+      includeFavicon: true,
     });
 
-    return response.results;
+    return {
+      answer: response.answer || "",
+      results: response.results || [],
+      query: response.query || query,
+    };
 
   } catch (error) {
 
     console.log("Tavily Error:", error.message);
 
-    return [];
+    return {
+      answer: "",
+      results: [],
+      query,
+    };
   }
 }

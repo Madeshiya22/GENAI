@@ -146,7 +146,8 @@ const Chat = () => {
     attachments
       .filter((attachment) => attachment.kind === "pdf")
       .forEach(async (attachment) => {
-        const uploaded = await uploadSelectedPDF(attachment.file);
+        const uploadResult = await uploadSelectedPDF(attachment.file);
+        const uploaded = uploadResult?.success === true;
 
         setPendingAttachments((current) =>
           current.map((item) =>
@@ -154,7 +155,9 @@ const Chat = () => {
               ? {
                   ...item,
                   status: uploaded ? "ready" : "error",
-                  error: uploaded ? "" : "PDF upload failed",
+                  error: uploaded
+                    ? ""
+                    : uploadResult?.error || "PDF upload failed",
                 }
               : item,
           ),

@@ -1,4 +1,5 @@
 import model from "../../../services/ai.service.js";
+import { randomUUID } from "node:crypto";
 
 import {
   searchSimilarChunks,
@@ -8,6 +9,10 @@ import {
 import { chunkText } from "../utils/chunk.utils.js";
 
 import { extractTextFromPDF } from "../utils/pdf.utils.js";
+
+function createDocumentId() {
+  return `pdf-${randomUUID()}`;
+}
 
 // UPLOAD PDF
 export async function uploadPDF(req, res) {
@@ -25,7 +30,8 @@ export async function uploadPDF(req, res) {
     if (!extractedText) {
       return res.status(400).json({
         success: false,
-        message: "No readable text found in PDF",
+        message:
+          "No readable text found in this PDF. Scanned/image-only PDFs are not supported yet.",
       });
     }
 
@@ -39,20 +45,24 @@ export async function uploadPDF(req, res) {
       });
     }
 
+    const documentId = createDocumentId();
+
     // CREATE VECTOR STORE
-    await createVectorStore(chunks);
+    await createVectorStore(chunks, documentId);
 
     return res.status(200).json({
       success: true,
 
       message: "PDF processed successfully",
 
+      documentId,
+
       totalChunks: chunks.length,
     });
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });
@@ -63,6 +73,7 @@ export async function uploadPDF(req, res) {
 export async function askPDFQuestion(req, res) {
   try {
     const question = req.body?.question?.trim();
+    const documentId = req.body?.documentId?.trim();
 
     if (!question) {
       return res.status(400).json({
@@ -71,8 +82,15 @@ export async function askPDFQuestion(req, res) {
       });
     }
 
+    if (!documentId) {
+      return res.status(400).json({
+        success: false,
+        message: "PDF document ID is required. Please upload the PDF again.",
+      });
+    }
+
     // SEARCH RELEVANT CHUNKS
-    const chunks = await searchSimilarChunks(question);
+    const chunks = await searchSimilarChunks(question, documentId);
 
     if (chunks.length === 0) {
       return res.status(200).json({
@@ -83,19 +101,31 @@ export async function askPDFQuestion(req, res) {
     }
 
     // COMBINE CONTEXT
-    const context = chunks.map((chunk) => chunk.pageContent).join("\n\n");
+    const context = chunks
+      .map((chunk, index) => {
+        const chunkLabel = chunk.chunk || index + 1;
+
+        return `[Chunk ${chunkLabel}]\n${chunk.pageContent}`;
+      })
+      .join("\n\n");
 
     // PROMPT
     const prompt = `
-Answer the user's question ONLY
-from the provided PDF context.
+You answer questions from a PDF.
+Use ONLY the provided retrieved PDF chunks.
+Do not scan, invent, or use information outside these chunks.
 
-If the answer is not present
-in the context,
-say:
+Important:
+- Reply with exact words from the PDF whenever possible.
+- Prefer short verbatim quotes copied from the PDF context.
+- Do not paraphrase unless you must connect two exact quotes.
+- If the exact answer is not present in the retrieved chunks, say:
 "Answer not found in PDF."
 
-PDF Context:
+Format:
+Answer: "<exact words from the PDF>"
+
+Retrieved PDF Chunks:
 ${context}
 
 Question:
@@ -115,7 +145,7 @@ ${question}
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });

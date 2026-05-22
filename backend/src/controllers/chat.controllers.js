@@ -4,6 +4,12 @@ import { runAgent } from "../features/agent/service/agent.service.js";
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
 
+function looksLikeRealtimeQuery(message) {
+  return /\b(latest|today|current|realtime|real-time|live|now|news|weather|score|stock|price|crypto|market|trending|recent)\b/i.test(
+    message,
+  );
+}
+
 // CREATE NEW CHAT
 export async function createNewChat(req, res) {
   try {
@@ -104,6 +110,18 @@ export async function handleChat(req, res) {
 
     res.setHeader("Connection", "keep-alive");
 
+    const searchIndicatorStarted = looksLikeRealtimeQuery(message);
+
+    if (searchIndicatorStarted) {
+      res.write(
+        `data:${JSON.stringify({
+          type: "searching",
+
+          searching: true,
+        })}\n\n`,
+      );
+    }
+
     // RUN LANGGRAPH AGENT
     // build previous messages array from stored messages
     const previousMessagesDocs = await messageModel
@@ -116,11 +134,29 @@ export async function handleChat(req, res) {
       content: m.content,
     }));
 
-    const response = await runAgent({
+    const agentResult = await runAgent({
       input: message,
       messages: previousMessages,
     });
-    let fullResponse = response;
+    const fullResponse = agentResult.response || "";
+
+    if (agentResult.route === "WEB") {
+      res.write(
+        `data:${JSON.stringify({
+          type: "sources",
+
+          sources: agentResult.sources || [],
+        })}\n\n`,
+      );
+    } else if (searchIndicatorStarted) {
+      res.write(
+        `data:${JSON.stringify({
+          type: "searching",
+
+          searching: false,
+        })}\n\n`,
+      );
+    }
 
     // SEND RESPONSE
     res.write(
