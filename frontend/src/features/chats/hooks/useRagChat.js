@@ -1,14 +1,7 @@
-import { useRef, useState } from "react";
-import { useDispatch } from "react-redux";
-
-import {
-  addMessage,
-  appendContentToLastMessage,
-  removeLastMessage,
-  setStreaming,
-} from "../state/chat.slice";
-import { clearSources } from "../state/webSearch.slice";
-import { askPDFQuestion, uploadPDF } from "../services/rag.service";
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import { useChat } from "./useChat";
+import { uploadPDF } from "../services/rag.service";
 
 const PDF_MIME_TYPE = "application/pdf";
 
@@ -21,8 +14,9 @@ function getErrorMessage(error, fallback) {
 }
 
 export function useRagChat() {
-  const dispatch = useDispatch();
-  const pendingQuestionRef = useRef("");
+  const { handleSendMessage } = useChat();
+  const { activeChatId } = useSelector((state) => state.chat);
+
   const [uploadStatus, setUploadStatus] = useState("idle");
   const [uploadedPDF, setUploadedPDF] = useState(null);
   const [uploadError, setUploadError] = useState("");
@@ -101,58 +95,28 @@ export function useRagChat() {
       return false;
     }
 
-    if (pendingQuestionRef.current === trimmedQuestion) {
-      return false;
-    }
-
-    pendingQuestionRef.current = trimmedQuestion;
     setIsAskingPDF(true);
-    dispatch(clearSources());
-    dispatch(setStreaming(true));
-
-    dispatch(
-      addMessage({
-        role: "user",
-        content: trimmedQuestion,
-        attachments,
-        timestamp: Date.now(),
-      }),
-    );
-
-    dispatch(
-      addMessage({
-        role: "assistant",
-        content: "",
-        timestamp: Date.now(),
-      }),
-    );
 
     try {
-      const data = await askPDFQuestion(
-        trimmedQuestion,
-        uploadedPDF?.documentId,
-      );
+      // Package the PDF as a ready attachment
+      const pdfAttachment = {
+        id: uploadedPDF.documentId,
+        kind: "pdf",
+        name: uploadedPDF.name,
+        size: uploadedPDF.size,
+        mimeType: PDF_MIME_TYPE,
+        status: "ready",
+      };
 
-      if (data?.success === false) {
-        throw new Error(data?.message || "Unable to answer from PDF.");
-      }
+      const allAttachments = [pdfAttachment, ...attachments];
 
-      dispatch(
-        appendContentToLastMessage({
-          chunk: data?.answer || "Answer not found in PDF.",
-        }),
-      );
-
-      return true;
+      // Route through the unified streaming sendMessage pathway
+      return await handleSendMessage(activeChatId, trimmedQuestion, allAttachments);
     } catch (error) {
-      dispatch(removeLastMessage());
-      dispatch(removeLastMessage());
       throw new Error(getErrorMessage(error, "Unable to answer from PDF."), {
         cause: error,
       });
     } finally {
-      dispatch(setStreaming(false));
-      pendingQuestionRef.current = "";
       setIsAskingPDF(false);
     }
   };

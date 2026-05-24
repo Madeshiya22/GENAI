@@ -21,15 +21,21 @@ function getSearchTopic(query) {
 
 export async function searchWeb(query) {
   try {
-    const response = await tvly.search(query, {
+    const topic = getSearchTopic(query);
+    const searchOptions = {
       searchDepth: "advanced",
-      topic: getSearchTopic(query),
-      timeRange: "day",
+      topic: topic,
       maxResults: 5,
       includeAnswer: "advanced",
       includeRawContent: "text",
       includeFavicon: true,
-    });
+    };
+
+    if (topic === "news") {
+      searchOptions.timeRange = "week";
+    }
+
+    const response = await tvly.search(query, searchOptions);
 
     return {
       answer: response.answer || "",

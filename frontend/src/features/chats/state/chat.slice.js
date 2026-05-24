@@ -28,6 +28,12 @@ const chatSlice = createSlice({
         lastMessage.content += action.payload.chunk;
       }
     },
+    setSourcesForLastMessage: (state, action) => {
+      const lastMessage = state.messages[state.messages.length - 1];
+      if (lastMessage) {
+        lastMessage.sources = action.payload.sources;
+      }
+    },
     removeLastMessage: (state) => {
       state.messages.pop();
     },
@@ -80,6 +86,7 @@ export const {
   setMessages,
   addMessage,
   appendContentToLastMessage,
+  setSourcesForLastMessage,
   removeLastMessage,
   setActiveChatId,
   setStreaming,

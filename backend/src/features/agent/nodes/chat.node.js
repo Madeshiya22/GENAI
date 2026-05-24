@@ -17,14 +17,16 @@ function getIdentityResponse(input) {
   return null;
 }
 
-export async function chatNode(state) {
+export async function chatNode(state, config) {
   try {
     const identityResponse = getIdentityResponse(state.input || "");
 
     if (identityResponse) {
+      if (config?.configurable?.onChunk) {
+        config.configurable.onChunk(identityResponse);
+      }
       return {
         ...state,
-
         response: identityResponse,
       };
     }
@@ -32,36 +34,37 @@ export async function chatNode(state) {
     const formattedMessages = [
       {
         role: "system",
-
         content: SYSTEM_PROMPT,
       },
-
       ...(state.messages || []).map((msg) => ({
         role: msg.role,
-
         content: msg.content,
       })),
-
       {
         role: "user",
-
         content: state.input,
       },
     ];
 
-    const response = await model.invoke(formattedMessages);
+    const stream = await model.stream(formattedMessages);
+    let fullResponse = "";
+
+    for await (const chunk of stream) {
+      const content = chunk.content || "";
+      fullResponse += content;
+      if (config?.configurable?.onChunk) {
+        config.configurable.onChunk(content);
+      }
+    }
 
     return {
       ...state,
-
-      response: response.content,
+      response: fullResponse,
     };
   } catch (error) {
-    console.log(error);
-
+    console.error(error);
     return {
       ...state,
-
       response: "Failed to generate response.",
     };
   }

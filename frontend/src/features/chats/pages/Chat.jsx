@@ -154,6 +154,7 @@ const Chat = () => {
             item.id === attachment.id
               ? {
                   ...item,
+                  id: uploaded ? uploadResult.documentId : item.id,
                   status: uploaded ? "ready" : "error",
                   error: uploaded
                     ? ""
@@ -376,6 +377,9 @@ const Chat = () => {
                       </div>
                       <div className="message__content">
                         <MarkdownRenderer content={msg.content} />
+                        {msg.sources && msg.sources.length > 0 && (
+                          <SearchSources sources={msg.sources} />
+                        )}
                       </div>
                     </div>
                   )}
@@ -393,20 +397,6 @@ const Chat = () => {
                 </div>
                 <div className="message__content">
                   <WebSearchIndicator />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Sources — aligned as an AI message */}
-          {sources.length > 0 && (
-            <div className="message assistant">
-              <div className="message__bubble">
-                <div className="message__avatar">
-                  <img src={mentoLogo} alt="AI" className="message__avatar-img" />
-                </div>
-                <div className="message__content">
-                  <SearchSources sources={sources} />
                 </div>
               </div>
             </div>

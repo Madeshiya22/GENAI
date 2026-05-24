@@ -41,6 +41,28 @@ const messageSchema = new mongoose.Schema(
         },
       },
     ],
+    sources: [
+      {
+        id: {
+          type: Number,
+        },
+        title: {
+          type: String,
+        },
+        url: {
+          type: String,
+        },
+        content: {
+          type: String,
+        },
+        publishedDate: {
+          type: String,
+        },
+        favicon: {
+          type: String,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

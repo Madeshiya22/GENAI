@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   addMessage,
   appendContentToLastMessage,
+  setSourcesForLastMessage,
   removeLastMessage,
   setStreaming,
   finalizeTempChat,
@@ -115,6 +116,7 @@ export const useChat = () => {
 
           onSources: (sources) => {
             dispatch(setSources(sources));
+            dispatch(setSourcesForLastMessage({ sources }));
           },
         }
       );

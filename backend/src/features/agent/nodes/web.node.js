@@ -7,7 +7,6 @@ function truncateText(text = "", maxLength = MAX_CONTEXT_CHARS) {
   if (text.length <= maxLength) {
     return text;
   }
-
   return `${text.slice(0, maxLength).trim()}...`;
 }
 
@@ -39,19 +38,31 @@ Content: ${truncateText(source.content)}`;
     .join("\n\n");
 }
 
-export async function webNode(state) {
+export async function webNode(state, config) {
   try {
+    if (config?.configurable?.onSearching) {
+      config.configurable.onSearching(true);
+    }
+
     const search = await searchWeb(state.input);
     const sources = normalizeSources(search.results);
 
+    if (config?.configurable?.onSources) {
+      config.configurable.onSources(sources);
+    }
+    if (config?.configurable?.onSearching) {
+      config.configurable.onSearching(false);
+    }
+
     if (sources.length === 0) {
+      const fallbackMsg = "I could not fetch realtime web results right now. Please try again in a moment.";
+      if (config?.configurable?.onChunk) {
+        config.configurable.onChunk(fallbackMsg);
+      }
       return {
         ...state,
-
         sources: [],
-
-        response:
-          "I could not fetch realtime web results right now. Please try again in a moment.",
+        response: fallbackMsg,
       };
     }
 
@@ -88,25 +99,37 @@ Web Search Results:
 ${buildSearchContext(sources)}
 `;
 
-    const response = await model.invoke(prompt);
+    const stream = await model.stream(prompt);
+    let fullResponse = "";
+
+    for await (const chunk of stream) {
+      const content = chunk.content || "";
+      fullResponse += content;
+      if (config?.configurable?.onChunk) {
+        config.configurable.onChunk(content);
+      }
+    }
 
     return {
       ...state,
-
       sources,
-
-      response: response.content,
+      response: fullResponse,
     };
   } catch (error) {
-    console.log("Web node error:", error.message);
+    console.error("Web node error:", error.message);
+    if (config?.configurable?.onSearching) {
+      config.configurable.onSearching(false);
+    }
+
+    const errorMsg = "I could not complete the realtime web search right now. Please try again in a moment.";
+    if (config?.configurable?.onChunk) {
+      config.configurable.onChunk(errorMsg);
+    }
 
     return {
       ...state,
-
       sources: [],
-
-      response:
-        "I could not complete the realtime web search right now. Please try again in a moment.",
+      response: errorMsg,
     };
   }
 }

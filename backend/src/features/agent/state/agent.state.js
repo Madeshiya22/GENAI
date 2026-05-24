@@ -28,4 +28,16 @@ export const agentState = {
 
     default: () => [],
   },
+
+  userId: {
+    value: (x, y) => y ?? x,
+
+    default: () => "",
+  },
+
+  documentIds: {
+    value: (x, y) => y ?? x,
+
+    default: () => [],
+  },
 };

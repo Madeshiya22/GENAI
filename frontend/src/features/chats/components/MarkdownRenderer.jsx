@@ -43,12 +43,16 @@ const MarkdownRenderer = ({ content }) => {
         remarkPlugins={[remarkGfm]}
         components={{
           // ─── Code blocks ──────────────────
-          code({ inline, className, children, ...props }) {
-            const match = /language-([^\s]+)/.exec(className || "");
-            const codeText = String(children).replace(/\n$/, "");
-            const language = match?.[1] || "text";
+          pre({ children, ...props }) {
+            const codeElement =
+              children && children.type === "code" ? children : null;
 
-            if (!inline && match) {
+            if (codeElement) {
+              const { className, children: codeChildren } = codeElement.props;
+              const match = /language-([^\s]+)/.exec(className || "");
+              const language = match?.[1] || "text";
+              const codeText = String(codeChildren).replace(/\n$/, "");
+
               return (
                 <div className="md-code">
                   <div className="md-code__header">
@@ -62,7 +66,6 @@ const MarkdownRenderer = ({ content }) => {
                     useInlineStyles={false}
                     codeTagProps={{ className: "md-code__content" }}
                     customStyle={{ margin: 0 }}
-                    {...props}
                   >
                     {codeText}
                   </SyntaxHighlighter>
@@ -70,20 +73,10 @@ const MarkdownRenderer = ({ content }) => {
               );
             }
 
-            if (!inline && !match) {
-              return (
-                <div className="md-code">
-                  <div className="md-code__header">
-                    <span className="md-code__lang">code</span>
-                    <CopyButton text={codeText} />
-                  </div>
-                  <pre className="md-code__plain">
-                    <code {...props}>{children}</code>
-                  </pre>
-                </div>
-              );
-            }
+            return <pre {...props}>{children}</pre>;
+          },
 
+          code({ className, children, ...props }) {
             return (
               <code className="md-inline-code" {...props}>
                 {children}
