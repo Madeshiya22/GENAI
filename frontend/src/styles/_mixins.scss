@@ -12,6 +12,7 @@
     transform var(--transition-fast);
 }
 
+
 @mixin text-truncate {
   min-width: 0;
   overflow: hidden;
