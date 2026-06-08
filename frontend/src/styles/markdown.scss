@@ -6,10 +6,9 @@
 .md {
   word-break: break-word;
   overflow-wrap: break-word;
-  overflow-x: hidden;
   max-width: 100%;
-  font-size: 15px;
-  line-height: 1.8;
+  font-size: 16px;
+  line-height: 1.7;
   color: var(--text-primary);
 
   // ─── First/last child spacing ──────────────
@@ -18,9 +17,14 @@
 
   // ─── Paragraphs ────────────────────────────
   .md-paragraph {
-    margin: 0 0 14px;
-    line-height: 1.8;
+    margin: 0 0 16px;
+    line-height: 1.7;
     color: var(--text-primary);
+
+    @media (max-width: 640px) {
+      margin: 0 0 12px;
+      line-height: 1.6;
+    }
 
     &:last-child { margin-bottom: 0; }
   }
@@ -29,16 +33,15 @@
   .md-heading {
     color: var(--text-heading);
     font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.35;
-    margin: 24px 0 10px;
+    line-height: 1.4;
+    margin: 24px 0 12px;
 
     &:first-child { margin-top: 0; }
   }
 
-  .md-h1 { font-size: 1.45em; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-  .md-h2 { font-size: 1.25em; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-  .md-h3 { font-size: 1.1em; }
+  .md-h1 { font-size: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .md-h2 { font-size: 1.3em; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .md-h3 { font-size: 1.15em; }
   .md-h4 { font-size: 1em; }
 
   // ─── Strong / Em ───────────────────────────
@@ -77,8 +80,8 @@
     font-size: 0.875em;
     color: #e3c38a;   // warm amber — like VS Code / ChatGPT inline code
     white-space: pre-wrap;
-    word-break: break-all;
-    overflow-wrap: anywhere;
+    word-break: break-word; /* changed from break-all */
+    overflow-wrap: break-word; /* changed from anywhere */
     vertical-align: baseline;
   }
 
@@ -87,11 +90,11 @@
     width: 100%;
     max-width: 100%;
     margin: 16px 0;
-    border-radius: 8px;
-    border: 1px solid #303030;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     overflow: hidden;
-    background: #0d0d0d;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    background: #171717;
+    box-shadow: none;
 
     &:last-child { margin-bottom: 0; }
 
@@ -99,14 +102,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      min-height: 42px;
-      padding: 0 16px;
-      background: #1a1a1a;
-      border-bottom: 1px solid #2a2a2a;
+      min-height: auto;
+      padding: 12px 16px 8px;
+      background: transparent;
+      border-bottom: none;
 
       @media (max-width: 640px) {
-        min-height: 36px;
-        padding: 0 10px;
+        padding: 10px 12px 6px;
       }
     }
 
@@ -162,7 +164,7 @@
     &__plain {
       display: block;
       margin: 0;
-      padding: 18px 20px;
+      padding: 0 16px 16px;
       max-width: 100%;
       overflow-x: auto;
       overflow-y: hidden;
@@ -177,7 +179,7 @@
       scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 
       @media (max-width: 640px) {
-        padding: 12px 14px;
+        padding: 0 12px 12px;
         font-size: 12px;
       }
 
@@ -314,8 +316,8 @@
 
   // ─── Lists ─────────────────────────────────
   .md-list {
-    margin: 6px 0 14px;
-    padding-left: 26px;
+    margin: 16px 0;
+    padding-left: 24px;
 
     @media (max-width: 640px) {
       padding-left: 20px;
@@ -332,14 +334,14 @@
   }
 
   .md-list__item {
-    margin: 5px 0;
-    line-height: 1.75;
+    margin: 8px 0;
+    line-height: 1.7;
     color: var(--text-primary);
-    padding-left: 2px;
+    padding-left: 4px;
 
-    &::marker { color: var(--accent); }
+    &::marker { color: var(--text-primary); }
 
-    .md-list { margin: 4px 0 4px; }
+    .md-list { margin: 8px 0; }
 
     input[type="checkbox"] {
       appearance: none;
