@@ -98,20 +98,8 @@ export function useRagChat() {
     setIsAskingPDF(true);
 
     try {
-      // Package the PDF as a ready attachment
-      const pdfAttachment = {
-        id: uploadedPDF.documentId,
-        kind: "pdf",
-        name: uploadedPDF.name,
-        size: uploadedPDF.size,
-        mimeType: PDF_MIME_TYPE,
-        status: "ready",
-      };
-
-      const allAttachments = [pdfAttachment, ...attachments];
-
       // Route through the unified streaming sendMessage pathway
-      return await handleSendMessage(activeChatId, trimmedQuestion, allAttachments);
+      return await handleSendMessage(activeChatId, trimmedQuestion, attachments);
     } catch (error) {
       throw new Error(getErrorMessage(error, "Unable to answer from PDF."), {
         cause: error,

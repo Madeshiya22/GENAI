@@ -40,7 +40,7 @@ function MessageAttachmentRenderer({ attachments = [] }) {
             {!isImage || !attachment.previewUrl ? (
               <div className="message-attachment__body">
                 <span title={attachment.name}>{attachment.name}</span>
-                <small>{fileSize ? `${label} - ${fileSize}` : label}</small>
+                <small>{label}</small>
               </div>
             ) : (
               <div className="message-attachment__caption">

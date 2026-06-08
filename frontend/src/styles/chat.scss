@@ -666,10 +666,10 @@
     }
 
     .message__content {
-      background: var(--user-msg-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
-      padding: 12px 18px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 12px 0;
       max-width: 72%;
       width: fit-content;
       flex: unset;         // override flex:1 so bubble doesn't stretch full width
@@ -679,7 +679,7 @@
 
       @media (max-width: 640px) {
         max-width: 85%;
-        padding: 10px 14px;
+        padding: 10px 0;
       }
     }
   }
@@ -718,13 +718,16 @@
   animation: attachmentIn 0.18s ease;
 
   &.pdf {
-    min-width: 220px;
+    min-width: 200px;
     max-width: 280px;
     display: grid;
-    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-columns: 36px minmax(0, 1fr);
     align-items: center;
-    gap: 10px;
-    padding: 10px;
+    gap: 12px;
+    padding: 8px 12px 8px 8px;
+    background: rgba(0, 0, 0, 0.15); /* Slightly darker to distinguish the pill, no solid black */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
   }
 
   &.image {
@@ -732,34 +735,44 @@
   }
 
   &__icon {
-    width: 42px;
-    height: 42px;
-    border-radius: var(--radius-sm);
-    background: var(--glass-bg-hover);
-    color: var(--accent-hover);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+
+    .pdf & {
+      background: #ef4444; /* ChatGPT style red icon */
+      color: #ffffff;
+    }
+
+    .image & {
+      background: var(--glass-bg-hover);
+      color: var(--accent-hover);
+    }
   }
 
   &__body {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
+    justify-content: center;
 
     span {
-      color: var(--text-primary);
+      color: #ffffff;
       font-size: 13px;
-      font-weight: 650;
+      font-weight: 600;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     small {
-      color: var(--text-muted);
+      color: #a3a3a3;
       font-size: 11px;
+      font-weight: 500;
     }
   }
 

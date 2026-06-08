@@ -23,7 +23,7 @@
   --border-strong: rgba(255, 255, 255, 0.1);
   --focus-ring: rgba(145, 119, 255, 0.55);
 
-  --user-msg-bg: linear-gradient(135deg, #7c5cfc 0%, #6246ea 100%);
+  --user-msg-bg: rgba(255, 255, 255, 0.08); /* ChatGPT style subtle background */
   --ai-msg-bg: #16162a;
   --composer-bg: linear-gradient(135deg, rgba(22, 22, 42, 0.78), rgba(12, 12, 22, 0.72));
   --glass-bg: rgba(255, 255, 255, 0.055);
@@ -68,7 +68,7 @@
   --border-strong: rgba(32, 33, 35, 0.16);
   --focus-ring: rgba(124, 92, 252, 0.36);
 
-  --user-msg-bg: linear-gradient(135deg, rgba(124, 92, 252, 0.16) 0%, rgba(98, 70, 234, 0.08) 100%);
+  --user-msg-bg: rgba(0, 0, 0, 0.06); /* ChatGPT style subtle background */
   --ai-msg-bg: #ffffff;
   --composer-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(247, 247, 244, 0.9));
   --glass-bg: rgba(32, 33, 35, 0.045);
