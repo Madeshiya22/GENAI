@@ -10,9 +10,6 @@ export async function uploadPDF(file) {
     formData.append("pdf", file);
 
     const response = await axios.post(`${API_BASE_URL}/api/rag/upload`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
       withCredentials: true,
     });
 

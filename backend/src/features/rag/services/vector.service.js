@@ -116,13 +116,13 @@ export async function createVectorStore(chunks, documentId, userId, fileName) {
     const targetIndex = getVectorIndex(userId);
 
     for (const batch of batches) {
-      await targetIndex.upsert(
-        batch.map((vector) => ({
+      await targetIndex.upsert({
+        records: batch.map((vector) => ({
           id: vector.id,
           values: vector.values,
           metadata: vector.metadata,
         }))
-      );
+      });
     }
 
     console.log(
