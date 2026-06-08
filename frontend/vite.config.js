@@ -20,12 +20,12 @@ export default defineConfig(({ mode }) => {
           display: 'standalone',
           icons: [
             {
-              src: 'icon/mentoai_logo_192x192.png',
+              src: 'icon/mentoai_logo.png',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'icon/mentoai_logo_512x512.png',
+              src: 'icon/mentoai_logo.png',
               sizes: '512x512',
               type: 'image/png'
             },

@@ -2,47 +2,42 @@ import fs from 'fs';
 import sharp from 'sharp';
 import path from 'path';
 
-const inputSvg = path.resolve('./public/favicon.svg');
-const publicDir = path.resolve('./public');
+const inputLogo = path.resolve('./src/assets/mentoai_logo.png');
+const iconDir = path.resolve('./public/icon');
+
+if (!fs.existsSync(iconDir)) fs.mkdirSync(iconDir, { recursive: true });
 
 const sizes = [
-  { name: 'pwa-192x192.png', size: 192 },
-  { name: 'pwa-512x512.png', size: 512 },
-  { name: 'apple-touch-icon.png', size: 180 }
+  { name: 'mentoai_logo.png',        size: 192 },
+  { name: 'mentoai_logo_512x512.png', size: 512 },
 ];
 
 async function generateIcons() {
-  if (!fs.existsSync(inputSvg)) {
-    console.error(`Input SVG not found: ${inputSvg}`);
-    return;
-  }
-
-  const svgBuffer = fs.readFileSync(inputSvg);
+  const buf = fs.readFileSync(inputLogo);
 
   for (const item of sizes) {
-    const outputPath = path.join(publicDir, item.name);
-    try {
-      await sharp(svgBuffer)
-        .resize(item.size, item.size)
-        .png()
-        .toFile(outputPath);
-      console.log(`Generated ${item.name} (${item.size}x${item.size})`);
-    } catch (err) {
-      console.error(`Error generating ${item.name}:`, err);
-    }
+    await sharp(buf)
+      .resize(item.size, item.size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toFile(path.join(iconDir, item.name));
+    console.log(`✓ Generated ${item.name} (${item.size}x${item.size})`);
   }
 
-  // Also create a maskable icon (often with a background)
-  try {
-    await sharp(svgBuffer)
-      .resize(512, 512, { fit: 'contain', background: { r: 134, g: 59, b: 255, alpha: 1 } }) // #863bff background for maskable
-      .flatten({ background: { r: 134, g: 59, b: 255 } })
-      .png()
-      .toFile(path.join(publicDir, 'maskable-icon-512x512.png'));
-    console.log('Generated maskable-icon-512x512.png');
-  } catch (err) {
-      console.error(`Error generating maskable icon:`, err);
-  }
+  // Maskable: logo on dark background with padding
+  await sharp(buf)
+    .resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .extend({ top: 56, bottom: 56, left: 56, right: 56, background: { r: 13, g: 6, b: 30, alpha: 1 } })
+    .png()
+    .toFile(path.resolve('./public/maskable-icon-512x512.png'));
+  console.log('✓ Generated maskable-icon-512x512.png');
+
+  // Apple touch icon
+  await sharp(buf)
+    .resize(140, 140, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .extend({ top: 20, bottom: 20, left: 20, right: 20, background: { r: 13, g: 6, b: 30, alpha: 1 } })
+    .png()
+    .toFile(path.resolve('./public/apple-touch-icon.png'));
+  console.log('✓ Generated apple-touch-icon.png (180x180)');
 }
 
-generateIcons();
+generateIcons().catch(console.error);
