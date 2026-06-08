@@ -71,6 +71,12 @@ const chatSlice = createSlice({
       state.messages = [];
     },
 
+    // Discard temp chat without saving (user navigated away without sending)
+    discardTempChat: (state) => {
+      state.tempChatActive = false;
+      // activeChatId and messages will be set by the subsequent setActiveChatId/setMessages calls
+    },
+
     // Convert temp chat to real chat after first message
     finalizeTempChat: (state, action) => {
       const { chat } = action.payload;
@@ -94,6 +100,7 @@ export const {
   removeChat,
   updateChatTitle,
   startTempChat,
+  discardTempChat,
   finalizeTempChat,
 } = chatSlice.actions;
 export default chatSlice.reducer;

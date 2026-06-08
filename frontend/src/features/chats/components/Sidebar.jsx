@@ -9,6 +9,7 @@ import {
   removeChat,
   clearChatState,
   startTempChat,
+  discardTempChat,
 } from "../state/chat.slice";
 import {
   deleteChat,
@@ -67,8 +68,10 @@ const Sidebar = ({ onChatSelect, onClose }) => {
 
   // SMART NEW CHAT — only creates temp, no API call
   function handleNewChat() {
-    if (tempChatActive) return; // Already in temp chat, do nothing
     if (streaming) return; // Don't interrupt streaming
+
+    // If already in a temp chat, just ensure it's active (no-op if already there)
+    if (tempChatActive) return;
 
     dispatch(startTempChat());
     if (onChatSelect) onChatSelect();
@@ -76,8 +79,18 @@ const Sidebar = ({ onChatSelect, onClose }) => {
 
   // OPEN EXISTING CHAT
   async function handleOpenChat(chatId) {
-    if (chatId === activeChatId) return;
     if (streaming) return;
+
+    // Capture before dispatch (Redux state in closure is snapshot at render time)
+    const wasTempChat = tempChatActive;
+
+    // Auto-discard any empty temp chat before switching to an existing chat
+    if (wasTempChat) {
+      dispatch(discardTempChat());
+    }
+
+    // Already on this chat and not coming from a temp state — nothing to do
+    if (chatId === activeChatId && !wasTempChat) return;
 
     dispatch(setActiveChatId(chatId));
     dispatch(setMessages([]));
@@ -174,7 +187,7 @@ const Sidebar = ({ onChatSelect, onClose }) => {
       <button
         className="sidebar__new-chat"
         onClick={handleNewChat}
-        disabled={tempChatActive || streaming}
+        disabled={streaming}
       >
         <Plus size={16} />
         New Chat
