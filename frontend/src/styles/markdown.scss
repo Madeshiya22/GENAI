@@ -103,6 +103,11 @@
       padding: 0 16px;
       background: #1a1a1a;
       border-bottom: 1px solid #2a2a2a;
+
+      @media (max-width: 640px) {
+        min-height: 36px;
+        padding: 0 10px;
+      }
     }
 
     &__lang {
@@ -170,6 +175,11 @@
       tab-size: 2;
       scrollbar-width: thin;
       scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+
+      @media (max-width: 640px) {
+        padding: 12px 14px;
+        font-size: 12px;
+      }
 
       code {
         display: inline-block;
@@ -306,6 +316,10 @@
   .md-list {
     margin: 6px 0 14px;
     padding-left: 26px;
+
+    @media (max-width: 640px) {
+      padding-left: 20px;
+    }
 
     &--ul {
       list-style-type: disc;

@@ -607,10 +607,18 @@
   padding: 6px 24px;
   animation: fadeIn 0.25s ease;
 
+  @media (max-width: 640px) {
+    padding: 6px 12px;
+  }
+
   &__bubble {
     display: flex;
     gap: 14px;
     align-items: flex-start;
+
+    @media (max-width: 640px) {
+      gap: 10px;
+    }
   }
 
   &__avatar {
